@@ -37,22 +37,40 @@ int main() {
     SOCKET _cSock=INVALID_SOCKET;
 
     char msgBuf[]="I'm Server.";
+    _cSock=accept(_sock,(sockaddr*)&clientAddr, &nAddrLen);
+    if(_cSock==INVALID_SOCKET){
+        std::cout<<"ERROR-->INVALID_SOCKET!"<<std::endl;
+    }
+    std::cout<<"新客户端加入：IP = "<<inet_ntoa(clientAddr.sin_addr)<<std::endl;
 
+    char _recvBuf[128]={};
     while (true){
-        _cSock=accept(_sock,(sockaddr*)&clientAddr, &nAddrLen);
-        if(_cSock==INVALID_SOCKET){
-            std::cout<<"ERROR-->INVALID_SOCKET!"<<std::endl;
+        //5）接收客户端数据
+        int nLen=recv(_cSock,_recvBuf,128,0);
+        if(nLen<=0){
+            std::cout<<"客户端退出~~~~~"<<std::endl;
+            break;
         }
-        std::cout<<"新客户端加入：IP = "<<inet_ntoa(clientAddr.sin_addr)<<std::endl;
-        //5)send 向客户端发送数据
-        send(_cSock,msgBuf,strlen(msgBuf)+1,0);
+        std::cout<<"收到命令："<<_recvBuf<<std::endl;
+        //6）处理请求
+        if(0==strcmp(_recvBuf,"getName")){
+            //7)send 向客户端发送数据
+            char msgBuf[]="name: Server.";
+            send(_cSock,msgBuf,strlen(msgBuf)+1,0);
+        }else if(0==strcmp(_recvBuf,"getAge")){
+            char msgBuf[]="80.";
+            send(_cSock,msgBuf,strlen(msgBuf)+1,0);
+        } else{
+            char msgBuf[]="???";
+            send(_cSock,msgBuf,strlen(msgBuf)+1,0);
+        }
     }
 
-    //6)关闭套接字
+    //8)关闭套接字
     closesocket(_sock);
 
     ///
     WSACleanup();//清除Win Socket环境
-
+    std::cout<<"已退出，任务结束"<<std::endl;
     return 0;
 }

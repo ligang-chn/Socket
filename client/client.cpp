@@ -29,17 +29,30 @@ int main() {
     }else{
         std::cout<<"success-->connect success!"<<std::endl;
     }
-    //3)recv 接收服务器信息
-    char recvBuf[256]={};
-    int nlen=recv(_sock,recvBuf,256,0);
-    if(nlen>0){
-        std::cout<<"接收到的数据： "<<recvBuf<<std::endl;
-    }
-    //4)关闭套接字
-    closesocket(_sock);
 
+
+    while(true){
+        //3）输入请求命令
+        char cmdBuf[128]={};
+        scanf("%s",&cmdBuf);
+        //4）处理请求命令
+        if(0==strcmp(cmdBuf,"exit")){
+            break;
+        }else{
+            //5）向服务器发送请求命令
+            send(_sock,cmdBuf,strlen(cmdBuf)+1,0);
+        }
+        //6)recv 接收服务器信息
+        char recvBuf[256]={};
+        int nlen=recv(_sock,recvBuf,256,0);
+        if(nlen>0){
+            std::cout<<"接收到的数据： "<<recvBuf<<std::endl;
+        }
+    }
+    //7)关闭套接字
+    closesocket(_sock);
     ///
     WSACleanup();//清除Win Socket环境
-
+    std::cout<<"已退出，任务结束"<<std::endl;
     return 0;
 }
