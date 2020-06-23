@@ -9,6 +9,12 @@
 #include <iostream>
 #include <inaddr.h>
 
+//结构化的网络消息数据定义
+struct DataPackage{
+    int age;
+    char name[32];
+};
+
 int main() {
     WORD ver=MAKEWORD(2,2);//版本号
     WSADATA dat;
@@ -30,7 +36,6 @@ int main() {
         std::cout<<"success-->connect success!"<<std::endl;
     }
 
-
     while(true){
         //3）输入请求命令
         char cmdBuf[128]={};
@@ -43,10 +48,11 @@ int main() {
             send(_sock,cmdBuf,strlen(cmdBuf)+1,0);
         }
         //6)recv 接收服务器信息
-        char recvBuf[256]={};
-        int nlen=recv(_sock,recvBuf,256,0);
+        char recvBuf[128]={};
+        int nlen=recv(_sock,recvBuf,128,0);
         if(nlen>0){
-            std::cout<<"接收到的数据： "<<recvBuf<<std::endl;
+            DataPackage* dp=(DataPackage*)recvBuf;
+            std::cout<<"接收到的数据：姓名："<<dp->name<<" ，年龄："<<dp->age<<std::endl;
         }
     }
     //7)关闭套接字

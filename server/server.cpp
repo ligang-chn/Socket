@@ -9,6 +9,14 @@
 #include <iostream>
 #include <inaddr.h>
 
+
+//结构化的网络消息数据定义
+struct DataPackage{
+    int age;
+    char name[32];
+};
+
+
 int main() {
     WORD ver=MAKEWORD(2,2);//版本号
     WSADATA dat;
@@ -53,14 +61,11 @@ int main() {
         }
         std::cout<<"收到命令："<<_recvBuf<<std::endl;
         //6）处理请求
-        if(0==strcmp(_recvBuf,"getName")){
+        if(0==strcmp(_recvBuf,"getInfo")){
             //7)send 向客户端发送数据
-            char msgBuf[]="name: Server.";
-            send(_cSock,msgBuf,strlen(msgBuf)+1,0);
-        }else if(0==strcmp(_recvBuf,"getAge")){
-            char msgBuf[]="80.";
-            send(_cSock,msgBuf,strlen(msgBuf)+1,0);
-        } else{
+            DataPackage dp={80,"LG"};
+            send(_cSock,(const char*)&dp, sizeof(DataPackage),0);
+        }else{
             char msgBuf[]="???";
             send(_cSock,msgBuf,strlen(msgBuf)+1,0);
         }
