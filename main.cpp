@@ -1,17 +1,14 @@
-#define  WIN32_LEAN_AND_MEAN //ä¸»è¦è§£å†³WinSock2.hå¤´æ–‡ä»¶å¼•å…¥é—®é¢˜
+#define  WIN32_LEAN_AND_MEAN //Ö÷Òª½â¾öWinSock2.hÍ·ÎÄ¼şÒıÈëÎÊÌâ
 
 #include <windows.h>
 #include <WinSock2.h>
 #include <iostream>
 
 int main() {
-    WORD ver=MAKEWORD(2,2);//ç‰ˆæœ¬å·
+    WORD ver=MAKEWORD(2,2);//°æ±¾ºÅ
     WSADATA dat;
-    WSAStartup(ver,&dat);//å¯åŠ¨windowsçš„socket 2.xç½‘ç»œç¯å¢ƒ
+    WSAStartup(ver,&dat);//Æô¶¯windowsµÄsocket 2.xÍøÂç»·¾³
     ///
-
-
-
 
     ///
 
