@@ -9,22 +9,18 @@
 #include <iostream>
 #include <inaddr.h>
 
-//结构化的网络消息数据定义
-struct DataPackage{
-    int age;
-    char name[32];
-};
+#include "../DataStruct.h"
 
 int main() {
     WORD ver=MAKEWORD(2,2);//版本号
     WSADATA dat;
     WSAStartup(ver,&dat);//启动windows的socket 2.x网络环境
-    ///
-    SOCKET _sock=socket(AF_INET,SOCK_STREAM,0);//1）建立一个socket套接字  ipv4网络，流类型，tcp/udp
+    ///1）建立一个socket套接字
+    SOCKET _sock=socket(AF_INET,SOCK_STREAM,0);//  ipv4网络，流类型，tcp/udp
     if(INVALID_SOCKET==_sock){
         std::cout<<"ERROR-->build socket failed!"<<std::endl;
     }
-    //2)connect连接服务器
+    ///2)connect连接服务器
     sockaddr_in _sin={};
     _sin.sin_family=AF_INET;
     _sin.sin_port=htons(9999);//host to net unsigned short
@@ -37,22 +33,42 @@ int main() {
     }
 
     while(true){
-        //3）输入请求命令
-        char cmdBuf[128]={};
+        ///3）输入请求命令
+        char cmdBuf[128]={};//用于存储请求命令
         scanf("%s",&cmdBuf);
-        //4）处理请求命令
+        ///4）处理请求命令
         if(0==strcmp(cmdBuf,"exit")){
             break;
-        }else{
+        }else if(0==strcmp(cmdBuf,"login")){//这里的请求命令只是客户端用来区分要发送的数据
+            DataHeader dh={CMD_LOGIN, sizeof(Login)};//发送数据的包头
+            Login login={"ligang","123456"};//发送数据缓冲区
+            ///5）向服务器发送请求命令
+            send(_sock,(const char*)&dh, sizeof(DataHeader),0);
+            send(_sock,(const char*)&login, sizeof(Login),0);
+            //接收服务器返回的数据
+            DataHeader retHeader={};
+            LoginResult loginRet={};
+            recv(_sock,(char*)&retHeader, sizeof(DataHeader),0);
+            recv(_sock,(char*)&loginRet, sizeof(LoginResult),0);
+
+            std::cout<<"LoginResult: "<<loginRet.result<<std::endl;
+
+        }else if(0==strcmp(cmdBuf,"logout")){
+            DataHeader dh={CMD_LOGOUT, sizeof(Logout)};
+            Logout logout={"ligang"};
             //5）向服务器发送请求命令
-            send(_sock,cmdBuf,strlen(cmdBuf)+1,0);
-        }
-        //6)recv 接收服务器信息
-        char recvBuf[128]={};
-        int nlen=recv(_sock,recvBuf,128,0);
-        if(nlen>0){
-            DataPackage* dp=(DataPackage*)recvBuf;
-            std::cout<<"接收到的数据：姓名："<<dp->name<<" ，年龄："<<dp->age<<std::endl;
+            send(_sock,(const char*)&dh, sizeof(DataHeader),0);
+            send(_sock,(const char*)&logout, sizeof(Logout),0);
+            //接收服务器返回的数据
+            DataHeader retHeader={};
+            LogoutResult logoutRet={};
+            recv(_sock,(char*)&retHeader, sizeof(DataHeader),0);
+            recv(_sock,(char*)&logoutRet, sizeof(LogoutResult),0);
+
+            std::cout<<"LoginResult: "<<logoutRet.result<<std::endl;
+
+        }else{
+            std::cout<<"不支持的命令~"<<std::endl;
         }
     }
     //7)关闭套接字

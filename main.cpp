@@ -3,16 +3,37 @@
 #include <windows.h>
 #include <WinSock2.h>
 #include <iostream>
+using namespace std;
+struct s{
+    double c;
+    char b;
+    int a;
+};
+
+s *sa;
+
+struct stu
+ {
+     union
+     {
+         char b;
+         double x;
+     }uu;
+     float cj;
+
+     double ss;
+//     char xm[8];
+}xc;
+
+struct Login{
+    char userName[32];
+    char PassWord[32];
+};
+
 
 int main() {
-    WORD ver=MAKEWORD(2,2);//版本号
-    WSADATA dat;
-    WSAStartup(ver,&dat);//启动windows的socket 2.x网络环境
-    ///
-
-    ///
-
-    WSACleanup();
-
+    Login login={"ligang","123456"};
+    cout<< sizeof(login)<<endl;
+    cout<< sizeof(Login)<<endl;
     return 0;
 }

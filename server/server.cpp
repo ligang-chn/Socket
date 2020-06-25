@@ -9,71 +9,84 @@
 #include <iostream>
 #include <inaddr.h>
 
-
-//结构化的网络消息数据定义
-struct DataPackage{
-    int age;
-    char name[32];
-};
+#include "../DataStruct.h"
 
 
 int main() {
     WORD ver=MAKEWORD(2,2);//版本号
     WSADATA dat;
     WSAStartup(ver,&dat);//启动windows的socket 2.x网络环境
-    ///
-    SOCKET _sock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);//1）建立一个socket套接字  ipv4网络，流类型，tcp/udp
+    ///1）建立一个socket套接字
+    SOCKET _sock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);//  ipv4网络，流类型，tcp/udp
     sockaddr_in _sin={};
     _sin.sin_family=AF_INET;
     _sin.sin_port=htons(9999);//host to net unsigned short
     _sin.sin_addr.S_un.S_addr= INADDR_ANY; //inet_addr("127.0.0.1");
-    if(SOCKET_ERROR== bind(_sock,(sockaddr*)&_sin, sizeof(_sin)))//2)绑定端口
+    ///2)绑定端口
+    if(SOCKET_ERROR== bind(_sock,(sockaddr*)&_sin, sizeof(_sin)))
     {
         std::cout<<"ERROR-->bind failed!"<<std::endl;
     }
-
-    if(SOCKET_ERROR== listen(_sock,5))//3)监听端口
+    ///3)监听端口
+    if(SOCKET_ERROR== listen(_sock,5))
     {
         std::cout<<"ERROR-->listen failed!"<<std::endl;
     }else{
         std::cout<<"Start Listening~~~~"<<std::endl;
     }
 
-    //4)accept 等待接收客户端连接
+    ///4)accept 等待接收客户端连接
     sockaddr_in clientAddr={};//存放返回的客户端地址
     int nAddrLen= sizeof(sockaddr_in);
     SOCKET _cSock=INVALID_SOCKET;
 
-    char msgBuf[]="I'm Server.";
+//    char msgBuf[]="I'm Server.";
     _cSock=accept(_sock,(sockaddr*)&clientAddr, &nAddrLen);
     if(_cSock==INVALID_SOCKET){
         std::cout<<"ERROR-->INVALID_SOCKET!"<<std::endl;
     }
-    std::cout<<"新客户端加入：IP = "<<inet_ntoa(clientAddr.sin_addr)<<std::endl;
+    std::cout<<"新客户端加入：IP = "<<inet_ntoa(clientAddr.sin_addr)<<" ,Port= "<<clientAddr.sin_port<<std::endl;
 
-    char _recvBuf[128]={};
     while (true){
-        //5）接收客户端数据
-        int nLen=recv(_cSock,_recvBuf,128,0);
+        ///5）接收客户端数据
+        DataHeader header={};//接收缓冲区
+        int nLen=recv(_cSock,(char*)&header, sizeof(DataHeader),0);//数据先接收包头大小
         if(nLen<=0){
             std::cout<<"客户端退出~~~~~"<<std::endl;
             break;
         }
-        std::cout<<"收到命令："<<_recvBuf<<std::endl;
+        std::cout<<"收到命令："<<header.cmd<<" ,数据长度："<<header.dataLength<<std::endl;
         //6）处理请求
-        if(0==strcmp(_recvBuf,"getInfo")){
-            //7)send 向客户端发送数据
-            DataPackage dp={80,"LG"};
-            send(_cSock,(const char*)&dp, sizeof(DataPackage),0);
-        }else{
-            char msgBuf[]="???";
-            send(_cSock,msgBuf,strlen(msgBuf)+1,0);
+        switch (header.cmd){
+            case CMD_LOGIN:
+                {
+                    Login login={};
+                    recv(_cSock,(char*)&login, sizeof(Login),0);
+                    //忽略判断用户密码是否正确的过程
+                    LoginResult ret={1};
+                    send(_cSock,(char*)&header, sizeof(DataHeader),0);
+                    send(_cSock,(char*)&ret, sizeof(LoginResult),0);
+                }
+                break;
+            case CMD_LOGOUT:
+                {
+                    Logout logout={};
+                    recv(_cSock,(char*)&logout, sizeof(Logout),0);
+                    //忽略判断用户密码是否正确的过程
+                    LogoutResult ret={1};
+                    send(_cSock,(char*)&header, sizeof(DataHeader),0);
+                    send(_cSock,(char*)&ret, sizeof(LogoutResult),0);
+                }
+                break;
+            default:
+                header.cmd=CMD_ERROR;
+                header.dataLength=0;
+                send(_cSock,(char*)&header, sizeof(DataHeader),0);
+                break;
         }
     }
-
     //8)关闭套接字
     closesocket(_sock);
-
     ///
     WSACleanup();//清除Win Socket环境
     std::cout<<"已退出，任务结束"<<std::endl;
