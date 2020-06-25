@@ -49,21 +49,22 @@ int main() {
 
     while (true){
         ///5）接收客户端数据
-        DataHeader header={};//接收缓冲区
-        int nLen=recv(_cSock,(char*)&header, sizeof(DataHeader),0);//数据先接收包头大小
+        char szRecv[1024]={};//接收缓冲区
+        int nLen=recv(_cSock,(char*)&szRecv, sizeof(DataHeader),0);//数据先接收包头大小
+        DataHeader* header=(DataHeader*)szRecv;
         if(nLen<=0){
             std::cout<<"客户端退出~~~~~"<<std::endl;
             break;
         }
 
-        //6）处理请求
-        switch (header.cmd){
+        ///6）处理请求
+        switch (header->cmd){
             case CMD_LOGIN:
                 {
-                    Login login={};
-                    recv(_cSock,(char*)&login+ sizeof(DataHeader), sizeof(Login)- sizeof(DataHeader),0);
-                    std::cout<<"收到命令：CMD_LOGIN ,数据长度："<<login.dataLength
-                                <<" ,username: "<<login.userName<<" ,password: "<<login.PassWord<<std::endl;
+                    recv(_cSock,szRecv+ sizeof(DataHeader), header->dataLength- sizeof(DataHeader),0);
+                    Login* login=(Login*)szRecv;
+                    std::cout<<"收到命令：CMD_LOGIN ,数据长度："<<login->dataLength
+                                <<" ,username: "<<login->userName<<" ,password: "<<login->PassWord<<std::endl;
                     //忽略判断用户密码是否正确的过程
                     LoginResult ret;
                     send(_cSock,(char*)&ret, sizeof(LoginResult),0);
@@ -71,18 +72,17 @@ int main() {
                 break;
             case CMD_LOGOUT:
                 {
-                    Logout logout={};
-                    recv(_cSock,(char*)&logout+ sizeof(DataHeader), sizeof(Logout)- sizeof(DataHeader),0);
-                    std::cout<<"收到命令：CMD_LOGIN ,数据长度："<<logout.dataLength
-                             <<" ,username: "<<logout.userName<<std::endl;
+                    recv(_cSock,szRecv+ sizeof(DataHeader), header->dataLength- sizeof(DataHeader),0);
+                    Logout* logout=(Logout*)szRecv;
+                    std::cout<<"收到命令：CMD_LOGIN ,数据长度："<<logout->dataLength
+                             <<" ,username: "<<logout->userName<<std::endl;
                     //忽略判断用户密码是否正确的过程
                     LogoutResult ret;
                     send(_cSock,(char*)&ret, sizeof(LogoutResult),0);
                 }
                 break;
             default:
-                header.cmd=CMD_ERROR;
-                header.dataLength=0;
+                DataHeader header={CMD_ERROR,0};
                 send(_cSock,(char*)&header, sizeof(DataHeader),0);
                 break;
         }
