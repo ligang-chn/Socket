@@ -11,6 +11,7 @@ enum CMD{
     CMD_LOGIN_RESULT,
     CMD_LOGOUT,
     CMD_LOGOUT_RESULT,
+    CMD_NEW_USER_JOIN,
     CMD_ERROR
 };
 
@@ -53,6 +54,16 @@ struct LogoutResult:public DataHeader{
         result=0;
     }
     int result;
+//    char PassWord[32];
+};
+
+struct NewUserJoin:public DataHeader{
+    NewUserJoin(int msock){
+        dataLength= sizeof(NewUserJoin);
+        cmd=CMD_NEW_USER_JOIN;
+        sock=msock;
+    }
+    int sock;
 //    char PassWord[32];
 };
 

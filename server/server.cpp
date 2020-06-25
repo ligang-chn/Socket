@@ -21,7 +21,7 @@ int processor(SOCKET _cSock){
     int nLen=recv(_cSock,(char*)&szRecv, sizeof(DataHeader),0);//数据先接收包头大小
     DataHeader* header=(DataHeader*)szRecv;
     if(nLen<=0){
-        std::cout<<"客户端退出~~~~~"<<std::endl;
+        std::cout<<_cSock<<" 客户端退出~~~~~"<<std::endl;
         return -1;
     }
 
@@ -31,7 +31,7 @@ int processor(SOCKET _cSock){
         {
             recv(_cSock,szRecv+ sizeof(DataHeader), header->dataLength- sizeof(DataHeader),0);
             Login* login=(Login*)szRecv;
-            std::cout<<"收到命令：CMD_LOGIN ,数据长度："<<login->dataLength
+            std::cout<<"socket: "<<_cSock<<" 收到命令：CMD_LOGIN ,数据长度："<<login->dataLength
                      <<" ,username: "<<login->userName<<" ,password: "<<login->PassWord<<std::endl;
             //忽略判断用户密码是否正确的过程
             LoginResult ret;
@@ -42,7 +42,7 @@ int processor(SOCKET _cSock){
         {
             recv(_cSock,szRecv+ sizeof(DataHeader), header->dataLength- sizeof(DataHeader),0);
             Logout* logout=(Logout*)szRecv;
-            std::cout<<"收到命令：CMD_LOGIN ,数据长度："<<logout->dataLength
+            std::cout<<"socket: "<<_cSock<<" 收到命令：CMD_LOGIN ,数据长度："<<logout->dataLength
                      <<" ,username: "<<logout->userName<<std::endl;
             //忽略判断用户密码是否正确的过程
             LogoutResult ret;
@@ -99,7 +99,7 @@ int main() {
         }
         ///nfds是一个整数值，是指fd_set集合中所有描述符（socket）的范围，而不是数量
         ///即所有文件描述符最大值+1，在windows中这个参数无所谓，可以写0
-        timeval t={0,0};//非阻塞模式
+        timeval t={1,0};//非阻塞模式
         int ret=select(_sock+1,&fdRead,&fdWrite,&fdExp, &t);
         if(ret<0){
             std::cout<<"select任务结束~~~~~"<<std::endl;
@@ -115,6 +115,10 @@ int main() {
             if(_cSock==INVALID_SOCKET){
                 std::cout<<"ERROR-->INVALID_SOCKET!"<<std::endl;
             }
+            for(int n=(int)g_clients.size()-1;n>=0;n--){
+                NewUserJoin userJoin((int)_cSock);
+                send(g_clients[n],(const char*)&userJoin, sizeof(NewUserJoin),0);
+            }
             g_clients.push_back(_cSock);
             std::cout<<"新客户端加入：IP = "<<inet_ntoa(clientAddr.sin_addr)<<" ,Port= "<<(int)_cSock<<std::endl;
         }
@@ -128,6 +132,9 @@ int main() {
                 }
             }
         }
+
+        std::cout<<"执行其他任务..."<<std::endl;
+
     }
 
     for(size_t n=g_clients.size()-1;n>=0;n--){
