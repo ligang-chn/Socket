@@ -40,29 +40,24 @@ int main() {
         if(0==strcmp(cmdBuf,"exit")){
             break;
         }else if(0==strcmp(cmdBuf,"login")){//这里的请求命令只是客户端用来区分要发送的数据
-            DataHeader dh={CMD_LOGIN, sizeof(Login)};//发送数据的包头
-            Login login={"ligang","123456"};//发送数据缓冲区
+            Login login;//发送数据缓冲区
+            strcpy(login.userName,"ligang");
+            strcpy(login.PassWord,"123456");
             ///5）向服务器发送请求命令
-            send(_sock,(const char*)&dh, sizeof(DataHeader),0);
             send(_sock,(const char*)&login, sizeof(Login),0);
             //接收服务器返回的数据
-            DataHeader retHeader={};
             LoginResult loginRet={};
-            recv(_sock,(char*)&retHeader, sizeof(DataHeader),0);
             recv(_sock,(char*)&loginRet, sizeof(LoginResult),0);
 
             std::cout<<"LoginResult: "<<loginRet.result<<std::endl;
 
         }else if(0==strcmp(cmdBuf,"logout")){
-            DataHeader dh={CMD_LOGOUT, sizeof(Logout)};
-            Logout logout={"ligang"};
-            //5）向服务器发送请求命令
-            send(_sock,(const char*)&dh, sizeof(DataHeader),0);
+            Logout logout;
+            strcpy(logout.userName,"ligang");
+            ///5）向服务器发送请求命令
             send(_sock,(const char*)&logout, sizeof(Logout),0);
             //接收服务器返回的数据
-            DataHeader retHeader={};
             LogoutResult logoutRet={};
-            recv(_sock,(char*)&retHeader, sizeof(DataHeader),0);
             recv(_sock,(char*)&logoutRet, sizeof(LogoutResult),0);
 
             std::cout<<"LoginResult: "<<logoutRet.result<<std::endl;
@@ -71,7 +66,7 @@ int main() {
             std::cout<<"不支持的命令~"<<std::endl;
         }
     }
-    //7)关闭套接字
+    ///7)关闭套接字
     closesocket(_sock);
     ///
     WSACleanup();//清除Win Socket环境

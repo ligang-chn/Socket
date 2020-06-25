@@ -55,26 +55,28 @@ int main() {
             std::cout<<"客户端退出~~~~~"<<std::endl;
             break;
         }
-        std::cout<<"收到命令："<<header.cmd<<" ,数据长度："<<header.dataLength<<std::endl;
+
         //6）处理请求
         switch (header.cmd){
             case CMD_LOGIN:
                 {
                     Login login={};
-                    recv(_cSock,(char*)&login, sizeof(Login),0);
+                    recv(_cSock,(char*)&login+ sizeof(DataHeader), sizeof(Login)- sizeof(DataHeader),0);
+                    std::cout<<"收到命令：CMD_LOGIN ,数据长度："<<login.dataLength
+                                <<" ,username: "<<login.userName<<" ,password: "<<login.PassWord<<std::endl;
                     //忽略判断用户密码是否正确的过程
-                    LoginResult ret={1};
-                    send(_cSock,(char*)&header, sizeof(DataHeader),0);
+                    LoginResult ret;
                     send(_cSock,(char*)&ret, sizeof(LoginResult),0);
                 }
                 break;
             case CMD_LOGOUT:
                 {
                     Logout logout={};
-                    recv(_cSock,(char*)&logout, sizeof(Logout),0);
+                    recv(_cSock,(char*)&logout+ sizeof(DataHeader), sizeof(Logout)- sizeof(DataHeader),0);
+                    std::cout<<"收到命令：CMD_LOGIN ,数据长度："<<logout.dataLength
+                             <<" ,username: "<<logout.userName<<std::endl;
                     //忽略判断用户密码是否正确的过程
-                    LogoutResult ret={1};
-                    send(_cSock,(char*)&header, sizeof(DataHeader),0);
+                    LogoutResult ret;
                     send(_cSock,(char*)&ret, sizeof(LogoutResult),0);
                 }
                 break;
@@ -85,7 +87,7 @@ int main() {
                 break;
         }
     }
-    //8)关闭套接字
+    ///8)关闭套接字
     closesocket(_sock);
     ///
     WSACleanup();//清除Win Socket环境
