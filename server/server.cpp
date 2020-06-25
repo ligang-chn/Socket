@@ -99,7 +99,8 @@ int main() {
         }
         ///nfds是一个整数值，是指fd_set集合中所有描述符（socket）的范围，而不是数量
         ///即所有文件描述符最大值+1，在windows中这个参数无所谓，可以写0
-        int ret=select(_sock+1,&fdRead,&fdWrite,&fdExp, nullptr);
+        timeval t={0,0};//非阻塞模式
+        int ret=select(_sock+1,&fdRead,&fdWrite,&fdExp, &t);
         if(ret<0){
             std::cout<<"select任务结束~~~~~"<<std::endl;
             break;
@@ -116,7 +117,6 @@ int main() {
             }
             g_clients.push_back(_cSock);
             std::cout<<"新客户端加入：IP = "<<inet_ntoa(clientAddr.sin_addr)<<" ,Port= "<<(int)_cSock<<std::endl;
-
         }
 
         ///5）接收客户端数据
