@@ -4,13 +4,33 @@
 
 #define  WIN32_LEAN_AND_MEAN //主要解决WinSock2.h头文件引入问题
 
-#include <windows.h>
-#include <WinSock2.h>
+#ifdef _WIN32
+    #include <windows.h>
+    #include <WinSock2.h>
+    #include <inaddr.h>//这个可能是之前clion自动引入的
+
+    #include "../DataStruct.h"
+#else
+#include <unistd.h>//uni std
+    #include <arpa/inet.h>
+    #include <netinet/in.h>
+    #include <string.h>
+    #include <stdlib.h>
+    #include <sys/socket.h>
+    #include <sys/types.h>
+    #include "./DataStruct.h"
+
+    #define SOCKET int
+    #define INVALID_SOCKET (SOCKET)(~0)
+    #define SOCKET_ERROR           (-1)
+#endif
+
 #include <iostream>
-#include <inaddr.h>
+#include <stdlib.h>
 #include <thread>
 
-#include "../DataStruct.h"
+
+
 int processor(SOCKET _cSock){
     char szRecv[1024]={};//接收缓冲区
     int nLen=recv(_cSock,(char*)&szRecv, sizeof(DataHeader),0);//数据先接收包头大小
@@ -57,7 +77,7 @@ bool g_bRun=true;
 void cmdThread(SOCKET sock){
     while (true){
         char cmdBuf[256]={};
-        scanf("%s",&cmdBuf);
+        scanf("%s",cmdBuf);
         if(0==strcmp(cmdBuf,"exit")){
             g_bRun=false;
             std::cout<<"退出cmdThread线程！"<<std::endl;
@@ -79,9 +99,11 @@ void cmdThread(SOCKET sock){
 
 
 int main() {
+#ifdef _WIN32
     WORD ver=MAKEWORD(2,2);//版本号
     WSADATA dat;
     WSAStartup(ver,&dat);//启动windows的socket 2.x网络环境
+#endif
     ///1）建立一个socket套接字
     SOCKET _sock=socket(AF_INET,SOCK_STREAM,0);//  ipv4网络，流类型，tcp/udp
     if(INVALID_SOCKET==_sock){
@@ -91,7 +113,12 @@ int main() {
     sockaddr_in _sin={};
     _sin.sin_family=AF_INET;
     _sin.sin_port=htons(9999);//host to net unsigned short
+
+#ifdef  _WIN32
     _sin.sin_addr.S_un.S_addr= inet_addr("127.0.0.1");
+#else
+    _sin.sin_addr.s_addr= inet_addr("192.168.181.1");
+#endif
     int ret=connect(_sock,(sockaddr*)&_sin, sizeof(sockaddr_in));
     if(SOCKET_ERROR==ret){
         std::cout<<"ERROR-->connect failed!"<<std::endl;
@@ -110,7 +137,7 @@ int main() {
         FD_ZERO(&fdReads);
         FD_SET(_sock,&fdReads);
         timeval t={1,0};
-        int ret=select(_sock,&fdReads,0,0,&t);
+        int ret=select(_sock+1,&fdReads,0,0,&t);
         if(ret<0){
             std::cout<<"select任务结束"<<std::endl;
             break;
@@ -129,9 +156,14 @@ int main() {
 //        Sleep(1000);//1000ms
     }
     ///7)关闭套接字
+#ifdef  _WIN32
     closesocket(_sock);
     ///
     WSACleanup();//清除Win Socket环境
+#else
+    close(_sock);
+#endif
+
     std::cout<<"已退出，任务结束"<<std::endl;
     return 0;
 }
