@@ -2,13 +2,13 @@
 // Created by ligang on 2020/6/23.
 //
 
-#define  WIN32_LEAN_AND_MEAN //Ö÷Òª½â¾öWinSock2.hÍ·ÎÄ¼şÒıÈëÎÊÌâ
+#define  WIN32_LEAN_AND_MEAN //ä¸»è¦è§£å†³WinSock2.hå¤´æ–‡ä»¶å¼•å…¥é—®é¢˜
 
 
 #ifdef _WIN32
 #include <windows.h>
 #include <WinSock2.h>
-#include <inaddr.h>//Õâ¸ö¿ÉÄÜÊÇÖ®Ç°clion×Ô¶¯ÒıÈëµÄ
+#include <inaddr.h>//è¿™ä¸ªå¯èƒ½æ˜¯ä¹‹å‰clionè‡ªåŠ¨å¼•å…¥çš„
 
 #include "../DataStruct.h"
 #else
@@ -18,9 +18,9 @@
     #include <string.h>
     #include <stdlib.h>
     #include <sys/socket.h>
-    #include <sys/types.h>
+    #include <sys/types.h>   
     #include "./DataStruct.h"
-
+    
     #define SOCKET int
     #define INVALID_SOCKET (SOCKET)(~0)
     #define SOCKET_ERROR           (-1)
@@ -35,23 +35,23 @@
 std::vector<SOCKET> g_clients;
 
 int processor(SOCKET _cSock){
-    char szRecv[1024]={};//½ÓÊÕ»º³åÇø
-    int nLen=(int)recv(_cSock,(char*)&szRecv, sizeof(DataHeader),0);//Êı¾İÏÈ½ÓÊÕ°üÍ·´óĞ¡
+    char szRecv[1024]={};//æ¥æ”¶ç¼“å†²åŒº
+    int nLen=(int)recv(_cSock,(char*)&szRecv, sizeof(DataHeader),0);//æ•°æ®å…ˆæ¥æ”¶åŒ…å¤´å¤§å°
     DataHeader* header=(DataHeader*)szRecv;
     if(nLen<=0){
-        std::cout<<_cSock<<" ¿Í»§¶ËÍË³ö~~~~~"<<std::endl;
+        std::cout<<_cSock<<" å®¢æˆ·ç«¯é€€å‡º~~~~~"<<std::endl;
         return -1;
     }
 
-    ///6£©´¦ÀíÇëÇó
+    ///6ï¼‰å¤„ç†è¯·æ±‚
     switch (header->cmd){
         case CMD_LOGIN:
         {
             recv(_cSock,szRecv+ sizeof(DataHeader), header->dataLength- sizeof(DataHeader),0);
             Login* login=(Login*)szRecv;
-            std::cout<<"socket: "<<_cSock<<" ÊÕµ½ÃüÁî£ºCMD_LOGIN ,Êı¾İ³¤¶È£º"<<login->dataLength
+            std::cout<<"socket: "<<_cSock<<" æ”¶åˆ°å‘½ä»¤ï¼šCMD_LOGIN ,æ•°æ®é•¿åº¦ï¼š"<<login->dataLength
                      <<" ,username: "<<login->userName<<" ,password: "<<login->PassWord<<std::endl;
-            //ºöÂÔÅĞ¶ÏÓÃ»§ÃÜÂëÊÇ·ñÕıÈ·µÄ¹ı³Ì
+            //å¿½ç•¥åˆ¤æ–­ç”¨æˆ·å¯†ç æ˜¯å¦æ­£ç¡®çš„è¿‡ç¨‹
             LoginResult ret;
             send(_cSock,(char*)&ret, sizeof(LoginResult),0);
         }
@@ -60,9 +60,9 @@ int processor(SOCKET _cSock){
         {
             recv(_cSock,szRecv+ sizeof(DataHeader), header->dataLength- sizeof(DataHeader),0);
             Logout* logout=(Logout*)szRecv;
-            std::cout<<"socket: "<<_cSock<<" ÊÕµ½ÃüÁî£ºCMD_LOGIN ,Êı¾İ³¤¶È£º"<<logout->dataLength
+            std::cout<<"socket: "<<_cSock<<" æ”¶åˆ°å‘½ä»¤ï¼šCMD_LOGIN ,æ•°æ®é•¿åº¦ï¼š"<<logout->dataLength
                      <<" ,username: "<<logout->userName<<std::endl;
-            //ºöÂÔÅĞ¶ÏÓÃ»§ÃÜÂëÊÇ·ñÕıÈ·µÄ¹ı³Ì
+            //å¿½ç•¥åˆ¤æ–­ç”¨æˆ·å¯†ç æ˜¯å¦æ­£ç¡®çš„è¿‡ç¨‹
             LogoutResult ret;
             send(_cSock,(char*)&ret, sizeof(LogoutResult),0);
         }
@@ -80,13 +80,13 @@ int processor(SOCKET _cSock){
 
 int main() {
 #ifdef _WIN32
-    WORD ver=MAKEWORD(2,2);//°æ±¾ºÅ
+    WORD ver=MAKEWORD(2,2);//ç‰ˆæœ¬å·
     WSADATA dat;
-    WSAStartup(ver,&dat);//Æô¶¯windowsµÄsocket 2.xÍøÂç»·¾³
+    WSAStartup(ver,&dat);//å¯åŠ¨windowsçš„socket 2.xç½‘ç»œç¯å¢ƒ
 #endif
 
-    ///1£©½¨Á¢Ò»¸ösocketÌ×½Ó×Ö
-    SOCKET _sock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);//  ipv4ÍøÂç£¬Á÷ÀàĞÍ£¬tcp/udp
+    ///1ï¼‰å»ºç«‹ä¸€ä¸ªsocketå¥—æ¥å­—
+    SOCKET _sock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);//  ipv4ç½‘ç»œï¼Œæµç±»å‹ï¼Œtcp/udp
     sockaddr_in _sin={};
     _sin.sin_family=AF_INET;
     _sin.sin_port=htons(9999);//host to net unsigned short
@@ -95,12 +95,12 @@ int main() {
 #else
     _sin.sin_addr.s_addr= INADDR_ANY;
 #endif
-    ///2)°ó¶¨¶Ë¿Ú
+    ///2)ç»‘å®šç«¯å£
     if(SOCKET_ERROR== bind(_sock,(sockaddr*)&_sin, sizeof(_sin)))
     {
         std::cout<<"ERROR-->bind failed!"<<std::endl;
     }
-    ///3)¼àÌı¶Ë¿Ú
+    ///3)ç›‘å¬ç«¯å£
     if(SOCKET_ERROR== listen(_sock,5))
     {
         std::cout<<"ERROR-->listen failed!"<<std::endl;
@@ -122,25 +122,25 @@ int main() {
         FD_SET(_sock,&fdWrite);
         FD_SET(_sock,&fdExp);
 
-        SOCKET maxSock=_sock;//¼ÆËã×î´óÃèÊö·û
+        SOCKET maxSock=_sock;//è®¡ç®—æœ€å¤§æè¿°ç¬¦
         for(int n=(int)g_clients.size()-1;n>=0;n--){
             FD_SET(g_clients[n],&fdRead);
             if(maxSock<g_clients[n]){
                 maxSock=g_clients[n];
             }
         }
-        ///nfdsÊÇÒ»¸öÕûÊıÖµ£¬ÊÇÖ¸fd_set¼¯ºÏÖĞËùÓĞÃèÊö·û£¨socket£©µÄ·¶Î§£¬¶ø²»ÊÇÊıÁ¿
-        ///¼´ËùÓĞÎÄ¼şÃèÊö·û×î´óÖµ+1£¬ÔÚwindowsÖĞÕâ¸ö²ÎÊıÎŞËùÎ½£¬¿ÉÒÔĞ´0
-        timeval t={1,0};//·Ç×èÈûÄ£Ê½
+        ///nfdsæ˜¯ä¸€ä¸ªæ•´æ•°å€¼ï¼Œæ˜¯æŒ‡fd_seté›†åˆä¸­æ‰€æœ‰æè¿°ç¬¦ï¼ˆsocketï¼‰çš„èŒƒå›´ï¼Œè€Œä¸æ˜¯æ•°é‡
+        ///å³æ‰€æœ‰æ–‡ä»¶æè¿°ç¬¦æœ€å¤§å€¼+1ï¼Œåœ¨windowsä¸­è¿™ä¸ªå‚æ•°æ— æ‰€è°“ï¼Œå¯ä»¥å†™0
+        timeval t={1,0};//éé˜»å¡æ¨¡å¼
         int ret=select(maxSock+1,&fdRead,&fdWrite,&fdExp, &t);
         if(ret<0){
-            std::cout<<"selectÈÎÎñ½áÊø~~~~~"<<std::endl;
+            std::cout<<"selectä»»åŠ¡ç»“æŸ~~~~~"<<std::endl;
             break;
         }
         if(FD_ISSET(_sock,&fdRead)){
             FD_CLR(_sock,&fdRead);
-            ///4)accept µÈ´ı½ÓÊÕ¿Í»§¶ËÁ¬½Ó
-            sockaddr_in clientAddr={};//´æ·Å·µ»ØµÄ¿Í»§¶ËµØÖ·
+            ///4)accept ç­‰å¾…æ¥æ”¶å®¢æˆ·ç«¯è¿æ¥
+            sockaddr_in clientAddr={};//å­˜æ”¾è¿”å›çš„å®¢æˆ·ç«¯åœ°å€
             int nAddrLen= sizeof(sockaddr_in);
             SOCKET _cSock=INVALID_SOCKET;
 #ifdef _WIN32
@@ -156,12 +156,12 @@ int main() {
                     send(g_clients[n],(const char*)&userJoin, sizeof(NewUserJoin),0);
                 }
                 g_clients.push_back(_cSock);
-                std::cout<<"ĞÂ¿Í»§¶Ë¼ÓÈë£ºIP = "<<inet_ntoa(clientAddr.sin_addr)<<" ,Port= "<<(int)_cSock<<std::endl;
+                std::cout<<"æ–°å®¢æˆ·ç«¯åŠ å…¥ï¼šIP = "<<inet_ntoa(clientAddr.sin_addr)<<" ,Port= "<<(int)_cSock<<std::endl;
             }
         }
 
 
-        ///5£©½ÓÊÕ¿Í»§¶ËÊı¾İ
+        ///5ï¼‰æ¥æ”¶å®¢æˆ·ç«¯æ•°æ®
 #ifdef _WIN32
         for(int n=0;n<fdRead.fd_count;n++){
             if(-1==processor(fdRead.fd_array[n])){
@@ -183,24 +183,24 @@ int main() {
             }
         }
 #endif
-        // std::cout<<"Ö´ĞĞÆäËûÈÎÎñ..."<<std::endl;
+        // std::cout<<"æ‰§è¡Œå…¶ä»–ä»»åŠ¡..."<<std::endl;
 
     }
 #ifdef _WIN32
     for(size_t n=g_clients.size()-1;n>=0;n--){
         closesocket(g_clients[n]);
     }
-    ///8)¹Ø±ÕÌ×½Ó×Ö
+    ///8)å…³é—­å¥—æ¥å­—
     closesocket(_sock);
     ///
-    WSACleanup();//Çå³ıWin Socket»·¾³
+    WSACleanup();//æ¸…é™¤Win Socketç¯å¢ƒ
 #else
     for(int n=(int)g_clients.size()-1;n>=0;n--){
         close(g_clients[n]);
     }
-    ///8)¹Ø±ÕÌ×½Ó×Ö
+    ///8)å…³é—­å¥—æ¥å­—
     close(_sock);
 #endif
-    std::cout<<"ÒÑÍË³ö£¬ÈÎÎñ½áÊø"<<std::endl;
+    std::cout<<"å·²é€€å‡ºï¼Œä»»åŠ¡ç»“æŸ"<<std::endl;
     return 0;
 }
