@@ -8,6 +8,7 @@
 #include <WinSock2.h>
 #include <iostream>
 #include <inaddr.h>
+#include <thread>
 
 #include "../DataStruct.h"
 int processor(SOCKET _cSock){
@@ -51,6 +52,31 @@ int processor(SOCKET _cSock){
     return 0;
 }
 
+bool g_bRun=true;
+///子线程处理函数
+void cmdThread(SOCKET sock){
+    while (true){
+        char cmdBuf[256]={};
+        scanf("%s",&cmdBuf);
+        if(0==strcmp(cmdBuf,"exit")){
+            g_bRun=false;
+            std::cout<<"退出cmdThread线程！"<<std::endl;
+            break;
+        }else if(0==strcmp(cmdBuf,"login")){
+            Login login;
+            strcpy(login.userName,"ligang");
+            strcpy(login.PassWord,"123456");
+            send(sock,(const char*)&login, sizeof(Login),0);
+        }else if(0==strcmp(cmdBuf,"logout")){
+            Logout logout;
+            strcpy(logout.userName,"ligang");
+            send(sock,(const char*)&logout, sizeof(Logout),0);
+        }else{
+            std::cout<<"不支持该命令！"<<std::endl;
+        }
+    }
+}
+
 
 int main() {
     WORD ver=MAKEWORD(2,2);//版本号
@@ -73,7 +99,13 @@ int main() {
         std::cout<<"success-->connect success!"<<std::endl;
     }
 
-    while(true){
+    ///启动线程
+    std::thread t1(cmdThread,_sock);
+    t1.detach();//Detach 线程。 将当前线程对象所代表的执行实例与该线程对象分离，使得线程的执行可以单独进行。
+    // 一旦线程执行完毕，它所分配的资源将会被释放。
+    //上面的意思就是，使用detach,main函数不用等待线程结束才能结束，有时候线程还没有结束，main函数就已经结束了。
+
+    while(g_bRun){
         fd_set fdReads;
         FD_ZERO(&fdReads);
         FD_SET(_sock,&fdReads);
@@ -91,12 +123,10 @@ int main() {
                 break;
             }
         }
-        Login login;
-        strcpy(login.userName,"ligang");
-        strcpy(login.PassWord,"123456");
-        send(_sock,(const char*)&login, sizeof(Login),0);
-        std::cout<<"执行其他任务..."<<std::endl;
-        Sleep(1000);//1000ms
+
+        ///线程thread
+//        std::cout<<"执行其他任务..."<<std::endl;
+//        Sleep(1000);//1000ms
     }
     ///7)关闭套接字
     closesocket(_sock);

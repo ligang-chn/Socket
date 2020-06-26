@@ -114,13 +114,14 @@ int main() {
             _cSock=accept(_sock,(sockaddr*)&clientAddr, &nAddrLen);
             if(_cSock==INVALID_SOCKET){
                 std::cout<<"ERROR-->INVALID_SOCKET!"<<std::endl;
+            }else{
+                for(int n=(int)g_clients.size()-1;n>=0;n--){
+                    NewUserJoin userJoin((int)_cSock);
+                    send(g_clients[n],(const char*)&userJoin, sizeof(NewUserJoin),0);
+                }
+                g_clients.push_back(_cSock);
+                std::cout<<"新客户端加入：IP = "<<inet_ntoa(clientAddr.sin_addr)<<" ,Port= "<<(int)_cSock<<std::endl;
             }
-            for(int n=(int)g_clients.size()-1;n>=0;n--){
-                NewUserJoin userJoin((int)_cSock);
-                send(g_clients[n],(const char*)&userJoin, sizeof(NewUserJoin),0);
-            }
-            g_clients.push_back(_cSock);
-            std::cout<<"新客户端加入：IP = "<<inet_ntoa(clientAddr.sin_addr)<<" ,Port= "<<(int)_cSock<<std::endl;
         }
 
         ///5）接收客户端数据
