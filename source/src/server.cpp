@@ -89,7 +89,7 @@ int main() {
     SOCKET _sock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);//  ipv4网络，流类型，tcp/udp
     sockaddr_in _sin={};
     _sin.sin_family=AF_INET;
-    _sin.sin_port=htons(9999);//host to net unsigned short
+    _sin.sin_port=htons(9998);//host to net unsigned short
 #ifdef _WIN32
     _sin.sin_addr.S_un.S_addr= INADDR_ANY; //inet_addr("127.0.0.1");
 #else

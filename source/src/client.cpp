@@ -1,25 +1,25 @@
 //
 // Created by ligang on 2020/6/23.
 //
-
+#if 0
 #define  WIN32_LEAN_AND_MEAN //主要解决WinSock2.h头文件引入问题
 
 #ifdef _WIN32
     #include <windows.h>
     #include <WinSock2.h>
     #include <inaddr.h>//这个可能是之前clion自动引入的
-    
+
     #include "../DataStruct.h"
 #else
-    #include <unistd.h>//uni std
+#include <unistd.h>//uni std
     #include <arpa/inet.h>
     #include <netinet/in.h>
     #include <string.h>
     #include <stdlib.h>
     #include <sys/socket.h>
-    #include <sys/types.h>   
+    #include <sys/types.h>
     #include "./DataStruct.h"
-    
+
     #define SOCKET int
     #define INVALID_SOCKET (SOCKET)(~0)
     #define SOCKET_ERROR           (-1)
@@ -163,7 +163,59 @@ int main() {
 #else
     close(_sock);
 #endif
-    
+
     std::cout<<"已退出，任务结束"<<std::endl;
     return 0;
 }
+#endif
+
+#if 1
+#include <iostream>
+#include <string.h>
+#include "SocketClient.h"
+
+
+///子线程处理函数
+void cmdThread(SocketClient* client){
+    while (true){
+        char cmdBuf[256]={};
+        scanf("%s",cmdBuf);
+        if(0==strcmp(cmdBuf,"exit")){
+            client->Close();
+            std::cout<<"退出cmdThread线程！"<<std::endl;
+            break;
+        }else if(0==strcmp(cmdBuf,"login")){
+            Login login;
+            strcpy(login.userName,"ligang");
+            strcpy(login.PassWord,"123456");
+            client->SendData(&login);
+        }else if(0==strcmp(cmdBuf,"logout")){
+            Logout logout;
+            strcpy(logout.userName,"ligang");
+            client->SendData(&logout);
+        }else{
+            std::cout<<"不支持该命令！"<<std::endl;
+        }
+    }
+}
+
+int main(){
+    SocketClient client;
+//    client.InitSocket();
+    client.Connect("192.168.181.1",9999);
+
+    ///启动线程
+    std::thread t1(cmdThread,&client);
+    t1.detach();//Detach 线程。 将当前线程对象所代表的执行实例与该线程对象分离，使得线程的执行可以单独进行。
+    // 一旦线程执行完毕，它所分配的资源将会被释放。
+    //上面的意思就是，使用detach,main函数不用等待线程结束才能结束，有时候线程还没有结束，main函数就已经结束了。
+
+    while (client.isRun()){
+        client.OnRun();
+    }
+
+    client.Close();
+    std::cout<<"主线程已退出，任务结束"<<std::endl;
+    return 0;
+}
+#endif

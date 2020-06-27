@@ -16,7 +16,7 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread") #添加线程选项
 
 # 编译源码生成目标
-add_executable(client src/client.cpp)
+add_executable(client src/client.cpp src/SocketClient.cpp src/SocketClient.h)
 add_executable(server src/server.cpp)
 
 # 添加链接库
