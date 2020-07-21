@@ -31,9 +31,19 @@ struct Login{
 };
 
 
-int main() {
-    Login login={"ligang","123456"};
-    cout<< sizeof(login)<<endl;
-    cout<< sizeof(Login)<<endl;
+union test
+{
+    int i;
+    char x[2];
+};
+
+
+int main(){
+
+    test a;
+    a.x[0]=10;
+    a.x[1]=1;
+    bool aa=(a.x[0]==a.i);
+    cout<<aa;
     return 0;
 }

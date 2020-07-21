@@ -1,0 +1,4 @@
+E:/programming/C++/clion/Socket/source/build/CMakeFiles/client.dir
+E:/programming/C++/clion/Socket/source/build/CMakeFiles/server.dir
+E:/programming/C++/clion/Socket/source/build/CMakeFiles/ALL_BUILD.dir
+E:/programming/C++/clion/Socket/source/build/CMakeFiles/ZERO_CHECK.dir
