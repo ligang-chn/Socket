@@ -1,26 +1,26 @@
 //
 // Created by ligang on 2020/6/23.
 //
-
+#if 0
 #define  WIN32_LEAN_AND_MEAN //主要解决WinSock2.h头文件引入问题
 
 
 #ifdef _WIN32
-#include <windows.h>
-#include <WinSock2.h>
-#include <inaddr.h>//这个可能是之前clion自动引入的
+    #include <windows.h>
+    #include <WinSock2.h>
+    #include <inaddr.h>//这个可能是之前clion自动引入的
 
-#include "../DataStruct.h"
+    #include "../DataStruct.h"
 #else
-#include <unistd.h>//uni std
+    #include <unistd.h>//uni std
     #include <arpa/inet.h>
     #include <netinet/in.h>
     #include <string.h>
     #include <stdlib.h>
     #include <sys/socket.h>
-    #include <sys/types.h>   
+    #include <sys/types.h>
     #include "./DataStruct.h"
-    
+
     #define SOCKET int
     #define INVALID_SOCKET (SOCKET)(~0)
     #define SOCKET_ERROR           (-1)
@@ -89,7 +89,7 @@ int main() {
     SOCKET _sock=socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);//  ipv4网络，流类型，tcp/udp
     sockaddr_in _sin={};
     _sin.sin_family=AF_INET;
-    _sin.sin_port=htons(9998);//host to net unsigned short
+    _sin.sin_port=htons(9999);//host to net unsigned short
 #ifdef _WIN32
     _sin.sin_addr.S_un.S_addr= INADDR_ANY; //inet_addr("127.0.0.1");
 #else
@@ -204,3 +204,32 @@ int main() {
     std::cout<<"已退出，任务结束"<<std::endl;
     return 0;
 }
+#endif
+
+
+#if 1
+
+#include <iostream>
+#include "SocketServer.h"
+
+using namespace std;
+
+
+int main(){
+    SocketServer server;
+    server.InitSocket();
+    server.Bind(nullptr,9999);
+    server.Listen(5);
+
+
+    while (server.isRun()){
+        server.OnRun();
+    }
+    server.Close();
+
+    cout<<"已退出"<<endl;
+    return 0;
+}
+
+
+#endif

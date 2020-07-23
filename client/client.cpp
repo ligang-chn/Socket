@@ -202,11 +202,11 @@ void cmdThread(SocketClient* client){
 int main(){
     SocketClient client;
 //    client.InitSocket();
-    client.Connect("127.0.0.1",9998);
+    client.Connect("127.0.0.1",9999);
 
 //    SocketClient client2;
 ////    client.InitSocket();
-//    client2.Connect("192.168.181.143",9998);
+//    client2.Connect("192.168.181.146",9999);
 //    std::thread t2(cmdThread,&client2);
 //    t2.detach();//Detach 线程。 将当前线程对象所代表的执行实例与该线程对象分离，使得线程的执行可以单独进行。
 //
@@ -222,7 +222,7 @@ int main(){
     // 一旦线程执行完毕，它所分配的资源将会被释放。
     //上面的意思就是，使用detach,main函数不用等待线程结束才能结束，有时候线程还没有结束，main函数就已经结束了。
 
-    while (client.isRun() ){//|| client2.isRun()||client3.isRun()
+    while (client.isRun()  ){//|| client2.isRun()||client3.isRun()
         client.OnRun();
 //        client2.OnRun();
 //        client3.OnRun();

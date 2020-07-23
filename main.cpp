@@ -1,49 +1,71 @@
-#define  WIN32_LEAN_AND_MEAN //主要解决WinSock2.h头文件引入问题
+//#define  WIN32_LEAN_AND_MEAN //主要解决WinSock2.h头文件引入问题
 
-#include <windows.h>
-#include <WinSock2.h>
-#include <iostream>
+#include<iostream>
+#include <vector>
+#include <algorithm>
+#include <map>
+
 using namespace std;
-struct s{
-    double c;
-    char b;
-    int a;
-};
+vector<int> res;
+int num=0;
+int tmp;
 
-s *sa;
+void test(vector<int> &arr){
+    sort(arr.begin(),arr.end());
+    int j=arr.size()-2;
+    for(int i=arr.size()-1;i>=0;i--,j--){
+        if(arr[i]==arr[j] ){
+            if(arr[i]==tmp){
+                continue;
+            }
+            res.push_back(arr[i]);
+            tmp=arr[i];
+            num++;
+            if(num==2)
+                return;
+        }
+    }
+}
 
-struct stu
- {
-     union
-     {
-         char b;
-         double x;
-     }uu;
-     float cj;
-
-     double ss;
-//     char xm[8];
-}xc;
-
-struct Login{
-    char userName[32];
-    char PassWord[32];
-};
-
-
-union test
-{
-    int i;
-    char x[2];
-};
-
+map<int,int> mm;
+void test2(vector<int> &arr){
+    for(auto it:arr){
+        mm[it]++;
+    }
+}
 
 int main(){
 
-    test a;
-    a.x[0]=10;
-    a.x[1]=1;
-    bool aa=(a.x[0]==a.i);
-    cout<<aa;
+    int n,a;
+    cin>>n;
+    vector<int> answ;
+    n--;
+    while(cin>>a && n){
+        answ.push_back(a);
+        n--;
+    }
+
+//    test(answ);
+    test2(answ);
+    int l=0,w=0;
+    int tmp=0;
+    int t=0;
+    vector<int> answw;
+    for(auto it:mm){
+        if(it.second>1){
+            if(it.second>3){
+                return it.first*it.first;
+            }
+            answw.push_back(it.first);
+        }
+
+    }
+
+
+
+
+    int sqrm=0;
+    sqrm=answw[0]*answw[1];
+    cout<<sqrm<<endl;
     return 0;
 }
