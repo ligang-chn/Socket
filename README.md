@@ -27,3 +27,4 @@
 9) 跨平台统一代码，linux+windows
 10) 封装Client类，同时与多个服务端通信
 11) 封装Server类，同时开启多个服务器（tag）
+12) TCP粘包测试
