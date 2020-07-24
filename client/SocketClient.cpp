@@ -80,6 +80,7 @@ bool SocketClient::OnRun() {
         FD_SET(_sock,&fdReads);
         timeval t={0,0};
         int ret=select(_sock+1,&fdReads,0,0,&t);
+//        std::cout<<"select ret= "<<ret<<"count= "<<_nCount++ <<std::endl;
         if(ret<0){
             std::cout<<"socket= "<<(int)_sock<<" select任务结束"<<std::endl;
             Close();
@@ -105,15 +106,16 @@ bool SocketClient::isRun() {
 
 //接收数据 处理粘包、分包
 int SocketClient::RecvData(SOCKET _cSock){
-    char szRecv[1024]={};//接收缓冲区
-    int nLen=recv(_cSock,(char*)&szRecv, sizeof(DataHeader),0);//数据先接收包头大小
-    DataHeader* header=(DataHeader*)szRecv;
-    if(nLen<=0){
-        std::cout<<"socket= "<<(int)_cSock<<" 与服务器断开连接~~~~~"<<std::endl;
-        return -1;
-    }
-    recv(_cSock,szRecv+ sizeof(DataHeader), header->dataLength- sizeof(DataHeader),0);
-    OnNetMsg(header);
+//    char szRecv[4096]={};//接收缓冲区
+    int nLen=recv(_cSock,(char*)&szRecv, 409600,0);//数据先接收包头大小
+//    std::cout<<"nLen= "<<nLen<<std::endl;
+//    DataHeader* header=(DataHeader*)szRecv;
+//    if(nLen<=0){
+//        std::cout<<"socket= "<<(int)_cSock<<" 与服务器断开连接~~~~~"<<std::endl;
+//        return -1;
+//    }
+//    recv(_cSock,szRecv+ sizeof(DataHeader), header->dataLength- sizeof(DataHeader),0);
+//    OnNetMsg(header);
     return 0;
 }
 

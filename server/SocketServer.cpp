@@ -144,6 +144,7 @@ bool SocketServer::OnRun() {
         ///即所有文件描述符最大值+1，在windows中这个参数无所谓，可以写0
         timeval t={1,0};//非阻塞模式
         int ret=select(maxSock+1,&fdRead,&fdWrite,&fdExp, &t);
+//        std::cout<<"select ret= "<<ret<<"count= "<<_nCount++ <<std::endl;
         if(ret<0){
             std::cout<<"select任务结束~~~~~"<<std::endl;
             Close();
@@ -166,7 +167,7 @@ bool SocketServer::OnRun() {
 #else
         for(int n=(int)g_clients.size()-1;n>=0;n--){
             if(FD_ISSET(g_clients[n],&fdRead)){
-                if(-1==processor(g_clients[n])){
+                if(-1==RecvData(g_clients[n])){
                     auto iter=g_clients.begin()+n;
                     if(iter!=g_clients.end()){
                         g_clients.erase(iter);
@@ -185,15 +186,18 @@ bool SocketServer::isRun() {
 }
 
 int SocketServer::RecvData(SOCKET _cSock){
-    char szRecv[1024]={};//接收缓冲区
-    int nLen=(int)recv(_cSock,(char*)&szRecv, sizeof(DataHeader),0);//数据先接收包头大小
-    DataHeader* header=(DataHeader*)szRecv;
-    if(nLen<=0){
-        std::cout<<" 客户端: "<<_cSock<<" 退出~~~~~"<<std::endl;
-        return -1;
-    }
-    recv(_cSock,szRecv+ sizeof(DataHeader), header->dataLength- sizeof(DataHeader),0);
-    OnNetMsg(_cSock,header);
+//    char szRecv[4096]={};//接收缓冲区
+    int nLen=(int)recv(_cSock,(char*)&szRecv, 409600,0);//数据先接收包头大小
+//    std::cout<<"nLen= "<<nLen<<std::endl;
+    LoginResult ret;
+    SendData(_cSock,&ret);
+//    DataHeader* header=(DataHeader*)szRecv;
+//    if(nLen<=0){
+//        std::cout<<" 客户端: "<<_cSock<<" 退出~~~~~"<<std::endl;
+//        return -1;
+//    }
+//    recv(_cSock,szRecv+ sizeof(DataHeader), header->dataLength- sizeof(DataHeader),0);
+//    OnNetMsg(_cSock,header);
     return 0;
 }
 
@@ -207,7 +211,7 @@ void SocketServer::OnNetMsg(SOCKET _cSock,DataHeader *header) {
                      <<" ,username: "<<login->userName<<" ,password: "<<login->PassWord<<std::endl;
             //忽略判断用户密码是否正确的过程
             LoginResult ret;
-            send(_cSock,(char*)&ret, sizeof(LoginResult),0);
+            SendData(_cSock,&ret);
         }
             break;
         case CMD_LOGOUT:
@@ -217,13 +221,13 @@ void SocketServer::OnNetMsg(SOCKET _cSock,DataHeader *header) {
                      <<" ,username: "<<logout->userName<<std::endl;
             //忽略判断用户密码是否正确的过程
             LogoutResult ret;
-            send(_cSock,(char*)&ret, sizeof(LogoutResult),0);
+            SendData(_cSock,&ret);
         }
             break;
         default:
         {
             DataHeader header={CMD_ERROR,0};
-            send(_cSock,(char*)&header, sizeof(DataHeader),0);
+            SendData(_cSock,&header);
         }
             break;
     }

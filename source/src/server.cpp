@@ -1,6 +1,38 @@
 //
 // Created by ligang on 2020/6/23.
 //
+#if 1
+
+#include <iostream>
+#include "SocketServer.h"
+
+using namespace std;
+
+int main(){
+
+    SocketServer server;
+    server.InitSocket();
+    server.Bind(nullptr,9999);
+    server.Listen(5);
+
+//    SocketServer server1;
+//    server1.InitSocket();
+//    server1.Bind(nullptr,9998);
+//    server1.Listen(5);
+
+    while (server.isRun() ){ //||server1.isRun()
+        server.OnRun();
+//        server1.OnRun();
+    }
+    server.Close();
+//    server1.Close();
+    cout<<"已退出"<<endl;
+    return 0;
+}
+
+
+#endif
+
 #if 0
 #define  WIN32_LEAN_AND_MEAN //主要解决WinSock2.h头文件引入问题
 
@@ -207,29 +239,3 @@ int main() {
 #endif
 
 
-#if 1
-
-#include <iostream>
-#include "SocketServer.h"
-
-using namespace std;
-
-
-int main(){
-    SocketServer server;
-    server.InitSocket();
-    server.Bind(nullptr,9999);
-    server.Listen(5);
-
-
-    while (server.isRun()){
-        server.OnRun();
-    }
-    server.Close();
-
-    cout<<"已退出"<<endl;
-    return 0;
-}
-
-
-#endif

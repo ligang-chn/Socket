@@ -35,6 +35,9 @@
 class SocketClient {
 private:
     SOCKET _sock;
+    char szRecv[409600]={};
+    int _nCount=0;
+
 public:
     SocketClient();
     virtual ~SocketClient();

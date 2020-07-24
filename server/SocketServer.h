@@ -39,6 +39,8 @@ class SocketServer {
 private:
     SOCKET _sock;
     std::vector<SOCKET> g_clients;
+    char szRecv[409600]={};
+    int _nCount=0;
 
 public:
     SocketServer();

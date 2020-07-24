@@ -36,6 +36,8 @@ int main(){
 //    client.InitSocket();
     client.Connect("127.0.0.1",9999);
 
+//    client.Connect("121.199.78.48",9999);
+
 //    SocketClient client2;
 ////    client.InitSocket();
 //    client2.Connect("192.168.181.146",9999);
@@ -49,13 +51,18 @@ int main(){
 //    t3.detach();//Detach 线程。 将当前线程对象所代表的执行实例与该线程对象分离，使得线程的执行可以单独进行。
 
     ///启动线程
-    std::thread t1(cmdThread,&client);
-    t1.detach();//Detach 线程。 将当前线程对象所代表的执行实例与该线程对象分离，使得线程的执行可以单独进行。
+//    std::thread t1(cmdThread,&client);
+//    t1.detach();//Detach 线程。 将当前线程对象所代表的执行实例与该线程对象分离，使得线程的执行可以单独进行。
     // 一旦线程执行完毕，它所分配的资源将会被释放。
     //上面的意思就是，使用detach,main函数不用等待线程结束才能结束，有时候线程还没有结束，main函数就已经结束了。
 
+    Login login;
+    strcpy(login.userName,"ligang");
+    strcpy(login.PassWord,"123456");
+
     while (client.isRun()  ){//|| client2.isRun()||client3.isRun()
         client.OnRun();
+        client.SendData(&login);
 //        client2.OnRun();
 //        client3.OnRun();
     }

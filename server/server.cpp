@@ -9,6 +9,7 @@
 using namespace std;
 
 int main(){
+
     SocketServer server;
     server.InitSocket();
     server.Bind(nullptr,9999);
