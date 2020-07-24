@@ -35,7 +35,6 @@ int main(){
     SocketClient client;
 //    client.InitSocket();
     client.Connect("127.0.0.1",9999);
-
 //    client.Connect("121.199.78.48",9999);
 
 //    SocketClient client2;
