@@ -58,7 +58,6 @@ int main(){
     Login login;
     strcpy(login.userName,"ligang");
     strcpy(login.PassWord,"123456");
-
     while (client.isRun()  ){//|| client2.isRun()||client3.isRun()
         client.OnRun();
         client.SendData(&login);
