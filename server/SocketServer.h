@@ -34,12 +34,15 @@
 #include <vector>
 #include <algorithm>
 
+#define  RECV_BUFF_SIZE 100     //缓冲区最小单元大小
 
 class SocketServer {
 private:
     SOCKET _sock;
     std::vector<SOCKET> g_clients;
-    char szRecv[409600]={};
+    char _szRecv[RECV_BUFF_SIZE]={}; //接收缓冲区
+//    char _szMsgBuf[RECV_BUFF_SIZE*10]={}; //第二/消息缓冲区
+//    int _lastPos=0;
     int _nCount=0;
 
 public:

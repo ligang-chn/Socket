@@ -36,36 +36,20 @@ void test2(vector<int> &arr){
 
 int main(){
 
-    int n,a;
-    cin>>n;
-    vector<int> answ;
-    n--;
-    while(cin>>a && n){
-        answ.push_back(a);
-        n--;
+    int num;
+    cin>>num;
+    int tmp;
+    vector<int> data;
+    while (cin>>tmp)
+    {
+        data.push_back(tmp);
+        cout<<tmp<<endl;
     }
 
-//    test(answ);
-    test2(answ);
-    int l=0,w=0;
-    int tmp=0;
-    int t=0;
-    vector<int> answw;
-    for(auto it:mm){
-        if(it.second>1){
-            if(it.second>3){
-                return it.first*it.first;
-            }
-            answw.push_back(it.first);
-        }
-
+    for(int i=0;i<data.size();i++){
+        cout<<data[i]<<" ";
     }
 
-
-
-
-    int sqrm=0;
-    sqrm=answw[0]*answw[1];
-    cout<<sqrm<<endl;
+    cout<<endl;
     return 0;
 }

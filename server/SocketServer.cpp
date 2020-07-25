@@ -142,7 +142,7 @@ bool SocketServer::OnRun() {
         }
         ///nfds是一个整数值，是指fd_set集合中所有描述符（socket）的范围，而不是数量
         ///即所有文件描述符最大值+1，在windows中这个参数无所谓，可以写0
-        timeval t={1,0};//非阻塞模式
+        timeval t={0,0};//非阻塞模式
         int ret=select(maxSock+1,&fdRead,&fdWrite,&fdExp, &t);
 //        std::cout<<"select ret= "<<ret<<"count= "<<_nCount++ <<std::endl;
         if(ret<0){
@@ -185,12 +185,17 @@ bool SocketServer::isRun() {
     return _sock!=INVALID_SOCKET;
 }
 
-int SocketServer::RecvData(SOCKET _cSock){
+int SocketServer::RecvData(SOCKET cSock){
 //    char szRecv[4096]={};//接收缓冲区
-    int nLen=(int)recv(_cSock,(char*)&szRecv, 409600,0);//数据先接收包头大小
-//    std::cout<<"nLen= "<<nLen<<std::endl;
+    int nLen=(int)recv(cSock,(char*)&_szRecv, RECV_BUFF_SIZE,0);//数据先接收包头大小
+//    std::cout<<"Server nLen= "<<nLen<<std::endl;
+    if(nLen<=0){
+        std::cout<<" 客户端: "<<cSock<<" 退出~~~~~"<<std::endl;
+        return -1;
+    }
+
     LoginResult ret;
-    SendData(_cSock,&ret);
+    SendData(cSock,&ret);
 //    DataHeader* header=(DataHeader*)szRecv;
 //    if(nLen<=0){
 //        std::cout<<" 客户端: "<<_cSock<<" 退出~~~~~"<<std::endl;
