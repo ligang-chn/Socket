@@ -8,6 +8,31 @@
 
 using namespace std;
 
+bool g_bRun=true;
+///子线程处理函数
+void cmdThread(){
+    while (true){
+        char cmdBuf[256]={};
+        scanf("%s",cmdBuf);
+        if(0==strcmp(cmdBuf,"exit")) {
+            g_bRun=false;
+            std::cout << "退出cmdThread线程！" << std::endl;
+            break;
+//        }else if(0==strcmp(cmdBuf,"login")){
+//            Login login;
+//            strcpy(login.userName,"ligang");
+//            strcpy(login.PassWord,"123456");
+//            client->SendData(&login);
+//        }else if(0==strcmp(cmdBuf,"logout")){
+//            Logout logout;
+//            strcpy(logout.userName,"ligang");
+//            client->SendData(&logout);
+        }else{
+            std::cout<<"不支持该命令！"<<std::endl;
+        }
+    }
+}
+
 int main(){
 
     SocketServer server;
@@ -19,8 +44,13 @@ int main(){
 //    server1.InitSocket();
 //    server1.Bind(nullptr,9998);
 //    server1.Listen(5);
+    ///启动线程
+    std::thread t1(cmdThread);
+    t1.detach();//Detach 线程。 将当前线程对象所代表的执行实例与该线程对象分离，使得线程的执行可以单独进行。
+    // 一旦线程执行完毕，它所分配的资源将会被释放。
+    //上面的意思就是，使用detach,main函数不用等待线程结束才能结束，有时候线程还没有结束，main函数就已经结束了。
 
-    while (server.isRun() ){ //||server1.isRun()
+    while (g_bRun){ //||server1.isRun()
         server.OnRun();
 //        server1.OnRun();
     }

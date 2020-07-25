@@ -152,27 +152,27 @@ void SocketClient::OnNetMsg(DataHeader* header){
         case CMD_LOGIN_RESULT:
         {
             LoginResult* loginResult=(LoginResult*)header;
-            std::cout<<"socket= "<<(int)_sock<<" 收到服务端消息：CMD_LOGIN_RESULT,数据长度："<<loginResult->dataLength
-                     <<" ,内容: "<<loginResult->result<<std::endl;
+//            std::cout<<"socket= "<<(int)_sock<<" 收到服务端消息：CMD_LOGIN_RESULT,数据长度："<<loginResult->dataLength
+//                     <<" ,内容: "<<loginResult->result<<std::endl;
         }
             break;
         case CMD_LOGOUT_RESULT:
         {
              LogoutResult* logoutResult=(LogoutResult*)header;
-            std::cout<<"socket= "<<(int)_sock<<" 收到服务端消息：CMD_LOGOUT_RESULT,数据长度："<<logoutResult->dataLength
-                     <<" ,内容: "<<logoutResult->result<<std::endl;
+//            std::cout<<"socket= "<<(int)_sock<<" 收到服务端消息：CMD_LOGOUT_RESULT,数据长度："<<logoutResult->dataLength
+//                     <<" ,内容: "<<logoutResult->result<<std::endl;
         }
             break;
         case CMD_NEW_USER_JOIN:
         {
             NewUserJoin* userJoin=(NewUserJoin*)header;
-            std::cout<<"socket= "<<(int)_sock<<" 收到服务端消息：CMD_NEW_USER_JOIN,数据长度："<<userJoin->dataLength
-                     <<" ,内容: "<<userJoin->sock<<std::endl;
+//            std::cout<<"socket= "<<(int)_sock<<" 收到服务端消息：CMD_NEW_USER_JOIN,数据长度："<<userJoin->dataLength
+//                     <<" ,内容: "<<userJoin->sock<<std::endl;
         }
             break;
         case CMD_ERROR:
         {
-            std::cout<<"socket= "<<(int)_sock<<" 收到服务端消息：CMD_ERROR,数据长度："<<header->dataLength<<std::endl;
+//            std::cout<<"socket= "<<(int)_sock<<" 收到服务端消息：CMD_ERROR,数据长度："<<header->dataLength<<std::endl;
         }
             break;
         default:{

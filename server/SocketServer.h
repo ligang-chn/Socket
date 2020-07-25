@@ -34,16 +34,45 @@
 #include <vector>
 #include <algorithm>
 
-#define  RECV_BUFF_SIZE 100     //缓冲区最小单元大小
+#ifndef  RECV_BUFF_SIZE
+#define  RECV_BUFF_SIZE 10240     //缓冲区最小单元大小
+#endif
+
+class ClientSocket{
+public:
+    ClientSocket(SOCKET sockfd = INVALID_SOCKET){
+        _sockfd=sockfd;
+        memset(_szMsgBuf,0, sizeof(_szMsgBuf));
+        _lastPos=0;
+    }
+
+    SOCKET sockfd(){
+        return _sockfd;
+    }
+
+    char* msgBuf(){
+        return _szMsgBuf;
+    }
+
+    int getLastPos(){
+        return _lastPos;
+    }
+
+    void setLastPos(int pos){
+        _lastPos=pos;
+    }
+private:
+    SOCKET _sockfd; //fd_set  file desc set
+
+    char _szMsgBuf[RECV_BUFF_SIZE*10]; //第二/消息缓冲区
+    int _lastPos;  //消息缓冲区的数据尾部位置
+};
 
 class SocketServer {
 private:
     SOCKET _sock;
-    std::vector<SOCKET> g_clients;
+    std::vector<ClientSocket*> _clients;
     char _szRecv[RECV_BUFF_SIZE]={}; //接收缓冲区
-//    char _szMsgBuf[RECV_BUFF_SIZE*10]={}; //第二/消息缓冲区
-//    int _lastPos=0;
-    int _nCount=0;
 
 public:
     SocketServer();
@@ -70,7 +99,7 @@ public:
     bool isRun();
 
     //接收数据 处理粘包 拆分包
-    int RecvData(SOCKET _cSock);
+    int RecvData(ClientSocket* pClient);
 
     //响应网络消息
     virtual void OnNetMsg(SOCKET _cSock, DataHeader* header);

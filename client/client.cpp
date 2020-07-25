@@ -6,35 +6,44 @@
 #include <string.h>
 #include "SocketClient.h"
 
-
+bool g_bRun=true;
 ///子线程处理函数
-void cmdThread(SocketClient* client){
+void cmdThread(){
     while (true){
         char cmdBuf[256]={};
         scanf("%s",cmdBuf);
-        if(0==strcmp(cmdBuf,"exit")){
-            client->Close();
-            std::cout<<"退出cmdThread线程！"<<std::endl;
+        if(0==strcmp(cmdBuf,"exit")) {
+            g_bRun=false;
+            std::cout << "退出cmdThread线程！" << std::endl;
             break;
-        }else if(0==strcmp(cmdBuf,"login")){
-            Login login;
-            strcpy(login.userName,"ligang");
-            strcpy(login.PassWord,"123456");
-            client->SendData(&login);
-        }else if(0==strcmp(cmdBuf,"logout")){
-            Logout logout;
-            strcpy(logout.userName,"ligang");
-            client->SendData(&logout);
+//        }else if(0==strcmp(cmdBuf,"login")){
+//            Login login;
+//            strcpy(login.userName,"ligang");
+//            strcpy(login.PassWord,"123456");
+//            client->SendData(&login);
+//        }else if(0==strcmp(cmdBuf,"logout")){
+//            Logout logout;
+//            strcpy(logout.userName,"ligang");
+//            client->SendData(&logout);
         }else{
             std::cout<<"不支持该命令！"<<std::endl;
         }
     }
 }
 
+
 int main(){
-    SocketClient client;
+    const int cCount=1;//FD_SETSIZE-1;
+    SocketClient* client[cCount];
+
+    for(int i=0;i<cCount;i++){
+        client[i]=new SocketClient();
+//        client[i]->Connect("127.0.0.1",9999);
+        client[i]->Connect("121.199.78.48",9999);
+//        client[i]->Connect("192.168.181.146",9999);
+    }
 //    client.InitSocket();
-    client.Connect("127.0.0.1",9999);
+//    client.Connect("127.0.0.1",9999);
 //    client.Connect("121.199.78.48",9999);
 
 //    SocketClient client2;
@@ -50,24 +59,31 @@ int main(){
 //    t3.detach();//Detach 线程。 将当前线程对象所代表的执行实例与该线程对象分离，使得线程的执行可以单独进行。
 
     ///启动线程
-//    std::thread t1(cmdThread,&client);
-//    t1.detach();//Detach 线程。 将当前线程对象所代表的执行实例与该线程对象分离，使得线程的执行可以单独进行。
+    std::thread t1(cmdThread);
+    t1.detach();//Detach 线程。 将当前线程对象所代表的执行实例与该线程对象分离，使得线程的执行可以单独进行。
     // 一旦线程执行完毕，它所分配的资源将会被释放。
     //上面的意思就是，使用detach,main函数不用等待线程结束才能结束，有时候线程还没有结束，main函数就已经结束了。
 
     Login login;
     strcpy(login.userName,"ligang");
     strcpy(login.PassWord,"123456");
-    while (client.isRun()  ){//|| client2.isRun()||client3.isRun()
-        client.OnRun();
-        client.SendData(&login);
+    while (g_bRun ){//|| client2.isRun()||client3.isRun()
+
+        for(int n=0;n<cCount;n++){
+            client[n]->SendData(&login);
+            client[n]->OnRun();
+        }
+
 //        client2.OnRun();
 //        client3.OnRun();
     }
 
 //    client3.Close();
 //    client2.Close();
-    client.Close();
+    for(int n=0;n<cCount;n++){
+        client[n]->Close();
+    }
+
     std::cout<<"主线程已退出，任务结束"<<std::endl;
 
     return 0;

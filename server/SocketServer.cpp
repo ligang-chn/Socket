@@ -81,41 +81,44 @@ SOCKET SocketServer::Accept() {
     ///4)accept 等待接收客户端连接
     sockaddr_in clientAddr={};//存放返回的客户端地址
     int nAddrLen= sizeof(sockaddr_in);
-    SOCKET _cSock=INVALID_SOCKET;
+    SOCKET cSock=INVALID_SOCKET;
 #ifdef _WIN32
-    _cSock=accept(_sock,(sockaddr*)&clientAddr, &nAddrLen);
+    cSock=accept(_sock,(sockaddr*)&clientAddr, &nAddrLen);
 #else
-    _cSock=accept(_sock,(sockaddr*)&clientAddr, (socklen_t*)&nAddrLen);
+    cSock=accept(_sock,(sockaddr*)&clientAddr, (socklen_t*)&nAddrLen);
 #endif
-    if(_cSock==INVALID_SOCKET){
-        std::cout<<"ERROR--> < socket= "<<_cSock <<" > INVALID_SOCKET!"<<std::endl;
+    if(cSock==INVALID_SOCKET){
+        std::cout<<"ERROR--> < socket= "<<cSock <<" > INVALID_SOCKET!"<<std::endl;
     }else{
-        NewUserJoin userJoin((int)_cSock);
+        NewUserJoin userJoin((int)cSock);
         SendDataToAll(&userJoin);
-        g_clients.push_back(_cSock);
-        std::cout<<"SUCCESS--> 新客户端加入：IP = "<<inet_ntoa(clientAddr.sin_addr)<<" ,socket= "<<(int)_cSock<<std::endl;
+        _clients.push_back(new ClientSocket(cSock));
+        std::cout<<"SUCCESS--> 新客户端加入：IP = "<<inet_ntoa(clientAddr.sin_addr)<<" ,socket= "<<(int)cSock<<std::endl;
     }
-    return _cSock;
+    return cSock;
 }
 
 
 void SocketServer::Close() {
     if(_sock!=INVALID_SOCKET){
 #ifdef _WIN32
-        for(int n=(int)g_clients.size()-1;n>=0;n--){
-            closesocket(g_clients[n]);
+        for(int n=(int)_clients.size()-1;n>=0;n--){
+            closesocket(_clients[n]->sockfd());
+            delete _clients[n];
         }
         ///8)关闭套接字
         closesocket(_sock);
         ///
         WSACleanup();//清除Win Socket环境
 #else
-        for(int n=(int)g_clients.size()-1;n>=0;n--){
-        close(g_clients[n]);
-    }
-    ///8)关闭套接字
-    close(_sock);
+        for(int n=(int)_clients.size()-1;n>=0;n--){
+            close(_clients[n]->sockfd());
+            delete _clients[n];
+        }
+        ///8)关闭套接字
+        close(_sock);
 #endif
+        _clients.clear();
     }
 }
 
@@ -134,15 +137,15 @@ bool SocketServer::OnRun() {
         FD_SET(_sock,&fdExp);
 
         SOCKET maxSock=_sock;//计算最大描述符
-        for(int n=(int)g_clients.size()-1;n>=0;n--){
-            FD_SET(g_clients[n],&fdRead);
-            if(maxSock<g_clients[n]){
-                maxSock=g_clients[n];
+        for(int n=(int)_clients.size()-1;n>=0;n--){
+            FD_SET(_clients[n]->sockfd(),&fdRead);
+            if(maxSock<_clients[n]->sockfd()){
+                maxSock=_clients[n]->sockfd();
             }
         }
         ///nfds是一个整数值，是指fd_set集合中所有描述符（socket）的范围，而不是数量
         ///即所有文件描述符最大值+1，在windows中这个参数无所谓，可以写0
-        timeval t={0,0};//非阻塞模式
+        timeval t={1,0};//非阻塞模式
         int ret=select(maxSock+1,&fdRead,&fdWrite,&fdExp, &t);
 //        std::cout<<"select ret= "<<ret<<"count= "<<_nCount++ <<std::endl;
         if(ret<0){
@@ -155,27 +158,18 @@ bool SocketServer::OnRun() {
             Accept();
         }
         ///5）接收客户端数据
-#ifdef _WIN32
-        for(int n=0;n<fdRead.fd_count;n++){
-            if(-1==RecvData(fdRead.fd_array[n])){
-                auto iter=std::find(g_clients.begin(),g_clients.end(),fdRead.fd_array[n]);
-                if(iter!=g_clients.end()){
-                    g_clients.erase(iter);
-                }
-            }
-        }
-#else
-        for(int n=(int)g_clients.size()-1;n>=0;n--){
-            if(FD_ISSET(g_clients[n],&fdRead)){
-                if(-1==RecvData(g_clients[n])){
-                    auto iter=g_clients.begin()+n;
-                    if(iter!=g_clients.end()){
-                        g_clients.erase(iter);
+        for(int n=(int)_clients.size()-1;n>=0;n--){
+            if(FD_ISSET(_clients[n]->sockfd(),&fdRead)){
+                if(-1==RecvData(_clients[n])){
+                    auto iter=_clients.begin()+n;
+                    if(iter!=_clients.end()){
+                        delete _clients[n];
+                        _clients.erase(iter);
                     }
                 }
             }
         }
-#endif
+
         return true;
     }
     return false;
@@ -185,70 +179,89 @@ bool SocketServer::isRun() {
     return _sock!=INVALID_SOCKET;
 }
 
-int SocketServer::RecvData(SOCKET cSock){
+int SocketServer::RecvData(ClientSocket* pClient){
 //    char szRecv[4096]={};//接收缓冲区
-    int nLen=(int)recv(cSock,(char*)&_szRecv, RECV_BUFF_SIZE,0);//数据先接收包头大小
+    int nLen=(int)recv(pClient->sockfd(),(char*)&_szRecv, RECV_BUFF_SIZE,0);//数据先接收包头大小
 //    std::cout<<"Server nLen= "<<nLen<<std::endl;
     if(nLen<=0){
-        std::cout<<" 客户端: "<<cSock<<" 退出~~~~~"<<std::endl;
+        std::cout<<" 客户端: "<<pClient->sockfd()<<" 退出~~~~~"<<std::endl;
         return -1;
     }
 
-    LoginResult ret;
-    SendData(cSock,&ret);
-//    DataHeader* header=(DataHeader*)szRecv;
-//    if(nLen<=0){
-//        std::cout<<" 客户端: "<<_cSock<<" 退出~~~~~"<<std::endl;
-//        return -1;
-//    }
-//    recv(_cSock,szRecv+ sizeof(DataHeader), header->dataLength- sizeof(DataHeader),0);
-//    OnNetMsg(_cSock,header);
+    memcpy(pClient->msgBuf()+pClient->getLastPos(),_szRecv,nLen); //将数据从接收缓冲区拷贝到第二缓冲区
+    pClient->setLastPos(pClient->getLastPos()+nLen); //消息缓冲区的数据尾部位置后移
+    //判断消息缓冲区的数据长度大于消息头长度
+    while (pClient->getLastPos() >= sizeof(DataHeader)){
+        //这时就可以知道当前消息体的长度
+        DataHeader* header=(DataHeader*)pClient->msgBuf();
+        //判断消息缓冲区的数据长度大于消息长度
+        if(pClient->getLastPos() >= header->dataLength){
+            //剩余未处理消息缓冲区数据的长度
+            int nSize=pClient->getLastPos()-header->dataLength;
+            //处理网络消息
+            OnNetMsg(pClient->sockfd(),header);
+            //将未处理数剧前移
+            memcpy(pClient->msgBuf(),pClient->msgBuf()+header->dataLength,nSize);
+            //消息缓冲区的数据尾部位置前移
+            pClient->setLastPos(nSize);
+        }else{
+            //剩余数据长度小于一条完整消息长度
+            break;
+        }
+    }
+
     return 0;
 }
 
-void SocketServer::OnNetMsg(SOCKET _cSock,DataHeader *header) {
+void SocketServer::OnNetMsg(SOCKET cSock,DataHeader *header) {
     ///6）处理请求
     switch (header->cmd){
         case CMD_LOGIN:
         {
-            Login* login=(Login*)header;
-            std::cout<<"socket: "<<_cSock<<" 收到命令：CMD_LOGIN ,数据长度："<<login->dataLength
-                     <<" ,username: "<<login->userName<<" ,password: "<<login->PassWord<<std::endl;
+//            Login* login=(Login*)header;
+//            std::cout<<"socket: "<<cSock<<" 收到命令：CMD_LOGIN ,数据长度："<<login->dataLength
+//                     <<" ,username: "<<login->userName<<" ,password: "<<login->PassWord<<std::endl;
             //忽略判断用户密码是否正确的过程
             LoginResult ret;
-            SendData(_cSock,&ret);
+            SendData(cSock,&ret);
         }
             break;
         case CMD_LOGOUT:
         {
-            Logout* logout=(Logout*)header;
-            std::cout<<"socket: "<<_cSock<<" 收到命令：CMD_LOGIN ,数据长度："<<logout->dataLength
-                     <<" ,username: "<<logout->userName<<std::endl;
+//            Logout* logout=(Logout*)header;
+//            std::cout<<"socket: "<<cSock<<" 收到命令：CMD_LOGIN ,数据长度："<<logout->dataLength
+//                     <<" ,username: "<<logout->userName<<std::endl;
             //忽略判断用户密码是否正确的过程
             LogoutResult ret;
-            SendData(_cSock,&ret);
+            SendData(cSock,&ret);
+        }
+            break;
+        case CMD_ERROR:
+        {
+//            std::cout<<"socket= "<<(int)_sock<<" 收到服务端消息：CMD_ERROR,数据长度："<<header->dataLength<<std::endl;
         }
             break;
         default:
         {
-            DataHeader header={CMD_ERROR,0};
-            SendData(_cSock,&header);
+            std::cout<<"socket= "<<(int)_sock<<" 收到未定义消息,数据长度："<<header->dataLength<<std::endl;
+//            DataHeader header;
+//            SendData(cSock,&header);
         }
             break;
     }
 }
 
-int SocketServer::SendData(SOCKET _cSock, DataHeader *header) {
+int SocketServer::SendData(SOCKET cSock, DataHeader *header) {
     if(isRun()&&header){
-        return send(_cSock,(const char*)header, header->dataLength,0);
+        return send(cSock,(const char*)header, header->dataLength,0);
     }
     return SOCKET_ERROR;
 }
 
 void SocketServer::SendDataToAll(DataHeader *header) {
     if(isRun()&&header){
-        for(int n=(int)g_clients.size()-1;n>=0;n--){
-            SendData(g_clients[n], header);
+        for(int n=(int)_clients.size()-1;n>=0;n--){
+            SendData(_clients[n]->sockfd(), header);
         }
     }
 }
