@@ -34,7 +34,7 @@ void cmdThread(){
 
 int main(){
 
-    const int cCount=64;//FD_SETSIZE-1;
+    const int cCount=100;//FD_SETSIZE-1;
     SocketClient* client[cCount];
 
     for(int i=0;i<cCount;i++){
