@@ -8,11 +8,13 @@
 #define  WIN32_LEAN_AND_MEAN //主要解决WinSock2.h头文件引入问题
 
 #ifdef _WIN32
+    #define FD_SETSIZE 1024
     #include <windows.h>
     #include <winsock2.h>
     #include <inaddr.h>//这个可能是之前clion自动引入的
 
     #include "../DataStruct.h"
+    #include "../ext/CELLTimestamp.h"
 #else
     #include <unistd.h>//uni std
     #include <arpa/inet.h>
@@ -22,6 +24,7 @@
     #include <sys/socket.h>
     #include <sys/types.h>
     #include "./DataStruct.h"
+    #include "./ext/CELLTimestamp.h"
 
     #define SOCKET int
     #define INVALID_SOCKET (SOCKET)(~0)
@@ -73,6 +76,8 @@ private:
     SOCKET _sock;
     std::vector<ClientSocket*> _clients;
     char _szRecv[RECV_BUFF_SIZE]={}; //接收缓冲区
+    CELLTimestamp _tTime;
+    int _recvCount;
 
 public:
     SocketServer();

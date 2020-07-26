@@ -33,14 +33,25 @@ void cmdThread(){
 
 
 int main(){
-    const int cCount=1;//FD_SETSIZE-1;
+
+    const int cCount=64;//FD_SETSIZE-1;
     SocketClient* client[cCount];
 
     for(int i=0;i<cCount;i++){
+        if(!g_bRun){
+            return 0;
+        }
         client[i]=new SocketClient();
-//        client[i]->Connect("127.0.0.1",9999);
-        client[i]->Connect("121.199.78.48",9999);
+//        client[i]->Connect("121.199.78.48",9999);
 //        client[i]->Connect("192.168.181.146",9999);
+    }
+
+    for(int i=0;i<cCount;i++){
+        if(!g_bRun){
+            return 0;
+        }
+        client[i]->Connect("127.0.0.1",9999);
+        std::cout<<"Connect= "<<i<<std::endl;
     }
 //    client.InitSocket();
 //    client.Connect("127.0.0.1",9999);
@@ -71,7 +82,7 @@ int main(){
 
         for(int n=0;n<cCount;n++){
             client[n]->SendData(&login);
-            client[n]->OnRun();
+//            client[n]->OnRun();
         }
 
 //        client2.OnRun();
@@ -83,7 +94,9 @@ int main(){
     for(int n=0;n<cCount;n++){
         client[n]->Close();
     }
-
+    for(int n=0;n<cCount;n++){
+        delete client[n];
+    }
     std::cout<<"主线程已退出，任务结束"<<std::endl;
 
     return 0;

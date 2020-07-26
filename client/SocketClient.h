@@ -8,6 +8,7 @@
 #define  WIN32_LEAN_AND_MEAN //主要解决WinSock2.h头文件引入问题
 
 #ifdef _WIN32
+    #define FD_SETSIZE 1024
     #include <windows.h>
     #include <WinSock2.h>
     #include <inaddr.h>//这个可能是之前clion自动引入的

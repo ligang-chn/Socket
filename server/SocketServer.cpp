@@ -6,6 +6,7 @@
 
 SocketServer::SocketServer(){
     _sock=INVALID_SOCKET;
+    _recvCount=0;
 }
 
 SocketServer::~SocketServer() {
@@ -93,7 +94,7 @@ SOCKET SocketServer::Accept() {
         NewUserJoin userJoin((int)cSock);
         SendDataToAll(&userJoin);
         _clients.push_back(new ClientSocket(cSock));
-        std::cout<<"SUCCESS--> 新客户端加入：IP = "<<inet_ntoa(clientAddr.sin_addr)<<" ,socket= "<<(int)cSock<<std::endl;
+//        std::cout<<"SUCCESS--> 新客户端(count= "<<_clients.size() <<" ) 加入：IP = "<<inet_ntoa(clientAddr.sin_addr)<<" ,socket= "<<(int)cSock<<std::endl;
     }
     return cSock;
 }
@@ -156,6 +157,7 @@ bool SocketServer::OnRun() {
         if(FD_ISSET(_sock,&fdRead)) {
             FD_CLR(_sock, &fdRead);
             Accept();
+            return true;
         }
         ///5）接收客户端数据
         for(int n=(int)_clients.size()-1;n>=0;n--){
@@ -214,6 +216,13 @@ int SocketServer::RecvData(ClientSocket* pClient){
 }
 
 void SocketServer::OnNetMsg(SOCKET cSock,DataHeader *header) {
+    _recvCount++;
+    auto t1=_tTime.getElapsedSecond();
+    if(t1>=1.0){
+        std::cout<<"time=< "<<t1<<" >, socket=< "<<_sock<<" >, recvCount=< "<<_recvCount<<" >"<<std::endl;
+        _recvCount=0;
+        _tTime.update();
+    }
     ///6）处理请求
     switch (header->cmd){
         case CMD_LOGIN:
@@ -222,8 +231,8 @@ void SocketServer::OnNetMsg(SOCKET cSock,DataHeader *header) {
 //            std::cout<<"socket: "<<cSock<<" 收到命令：CMD_LOGIN ,数据长度："<<login->dataLength
 //                     <<" ,username: "<<login->userName<<" ,password: "<<login->PassWord<<std::endl;
             //忽略判断用户密码是否正确的过程
-            LoginResult ret;
-            SendData(cSock,&ret);
+//            LoginResult ret;
+//            SendData(cSock,&ret);
         }
             break;
         case CMD_LOGOUT:
@@ -232,8 +241,8 @@ void SocketServer::OnNetMsg(SOCKET cSock,DataHeader *header) {
 //            std::cout<<"socket: "<<cSock<<" 收到命令：CMD_LOGIN ,数据长度："<<logout->dataLength
 //                     <<" ,username: "<<logout->userName<<std::endl;
             //忽略判断用户密码是否正确的过程
-            LogoutResult ret;
-            SendData(cSock,&ret);
+//            LogoutResult ret;
+//            SendData(cSock,&ret);
         }
             break;
         case CMD_ERROR:

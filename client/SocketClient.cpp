@@ -29,7 +29,7 @@ void SocketClient::InitSocket() {
     if(INVALID_SOCKET==_sock){
         std::cout<<"ERROR-->build socket failed!"<<std::endl;
     }else{
-        std::cout<<"OK-->build socket: ( "<< (int)_sock <<" ) success!"<<std::endl;
+//        std::cout<<"OK-->build socket: ( "<< (int)_sock <<" ) success!"<<std::endl;
     }
 }
 
@@ -52,8 +52,8 @@ int SocketClient::Connect(const char *ip, unsigned short port) {
         std::cout<<"ERROR-->socket= "<<(int)_sock<<" connect server: ( ip= "
         <<ip<<" , port= "<<port<<" ) failed!"<<std::endl;
     }else{
-        std::cout<<"success-->socket= "<<(int)_sock<<" connect server: ( ip= "
-        <<ip<<" , port= "<<port<<" ) success!"<<std::endl;
+//        std::cout<<"success-->socket= "<<(int)_sock<<" connect server: ( ip= "
+//        <<ip<<" , port= "<<port<<" ) success!"<<std::endl;
     }
     return ret;
 }
