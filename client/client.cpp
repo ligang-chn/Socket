@@ -7,6 +7,15 @@
 #include "SocketClient.h"
 
 bool g_bRun=true;
+
+//客户端数量
+const int cCount=1000;//FD_SETSIZE-1;
+//发送线程数量
+const int tCount=4;
+//客户端数组
+SocketClient* client[cCount];
+
+
 ///子线程处理函数
 void cmdThread(){
     while (true){
@@ -32,24 +41,21 @@ void cmdThread(){
 }
 
 
-int main(){
+void sendThread(int id){
+    //4个线程 ID 1~4
+    int c=cCount/tCount;
+    int begin=(id-1)*c;
+    int end=id*c;
 
-    const int cCount=100;//FD_SETSIZE-1;
-    SocketClient* client[cCount];
 
-    for(int i=0;i<cCount;i++){
-        if(!g_bRun){
-            return 0;
-        }
+
+    for(int i=begin;i<end;i++){
         client[i]=new SocketClient();
 //        client[i]->Connect("121.199.78.48",9999);
 //        client[i]->Connect("192.168.181.146",9999);
     }
 
-    for(int i=0;i<cCount;i++){
-        if(!g_bRun){
-            return 0;
-        }
+    for(int i=begin;i<end;i++){
         client[i]->Connect("127.0.0.1",9999);
         std::cout<<"Connect= "<<i<<std::endl;
     }
@@ -69,18 +75,13 @@ int main(){
 //    std::thread t3(cmdThread,&client3);
 //    t3.detach();//Detach 线程。 将当前线程对象所代表的执行实例与该线程对象分离，使得线程的执行可以单独进行。
 
-    ///启动线程
-    std::thread t1(cmdThread);
-    t1.detach();//Detach 线程。 将当前线程对象所代表的执行实例与该线程对象分离，使得线程的执行可以单独进行。
-    // 一旦线程执行完毕，它所分配的资源将会被释放。
-    //上面的意思就是，使用detach,main函数不用等待线程结束才能结束，有时候线程还没有结束，main函数就已经结束了。
 
     Login login;
     strcpy(login.userName,"ligang");
     strcpy(login.PassWord,"123456");
     while (g_bRun ){//|| client2.isRun()||client3.isRun()
 
-        for(int n=0;n<cCount;n++){
+        for(int n=begin;n<end;n++){
             client[n]->SendData(&login);
 //            client[n]->OnRun();
         }
@@ -91,12 +92,28 @@ int main(){
 
 //    client3.Close();
 //    client2.Close();
-    for(int n=0;n<cCount;n++){
+    for(int n=begin;n<end;n++){
         client[n]->Close();
     }
-    for(int n=0;n<cCount;n++){
-        delete client[n];
+}
+
+int main(){
+    ///启动UI线程
+    std::thread t1(cmdThread);
+    t1.detach();//Detach 线程。 将当前线程对象所代表的执行实例与该线程对象分离，使得线程的执行可以单独进行。
+    // 一旦线程执行完毕，它所分配的资源将会被释放。
+    //上面的意思就是，使用detach,main函数不用等待线程结束才能结束，有时候线程还没有结束，main函数就已经结束了。
+
+    //启动发送线程
+    for(int n=0;n<tCount;n++){
+        std::thread t1(sendThread,n+1);
+        t1.detach();//Detach 线程。 将当前线程对象所代表的执行实例与该线程对象分离，使得线程的执行可以单独进行。
     }
+
+    while(g_bRun){
+        Sleep(100);
+    }
+
     std::cout<<"主线程已退出，任务结束"<<std::endl;
 
     return 0;

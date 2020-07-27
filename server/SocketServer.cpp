@@ -91,8 +91,8 @@ SOCKET SocketServer::Accept() {
     if(cSock==INVALID_SOCKET){
         std::cout<<"ERROR--> < socket= "<<cSock <<" > INVALID_SOCKET!"<<std::endl;
     }else{
-        NewUserJoin userJoin((int)cSock);
-        SendDataToAll(&userJoin);
+//        NewUserJoin userJoin((int)cSock);
+//        SendDataToAll(&userJoin);
         _clients.push_back(new ClientSocket(cSock));
 //        std::cout<<"SUCCESS--> 新客户端(count= "<<_clients.size() <<" ) 加入：IP = "<<inet_ntoa(clientAddr.sin_addr)<<" ,socket= "<<(int)cSock<<std::endl;
     }

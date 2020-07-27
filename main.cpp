@@ -4,52 +4,59 @@
 #include <vector>
 #include <algorithm>
 #include <map>
+#include <thread>
+#include <mutex>//锁
+#include <atomic> //原子
+#include "ext/CELLTimestamp.h"
 
 using namespace std;
-vector<int> res;
-int num=0;
-int tmp;
 
-void test(vector<int> &arr){
-    sort(arr.begin(),arr.end());
-    int j=arr.size()-2;
-    for(int i=arr.size()-1;i>=0;i--,j--){
-        if(arr[i]==arr[j] ){
-            if(arr[i]==tmp){
-                continue;
-            }
-            res.push_back(arr[i]);
-            tmp=arr[i];
-            num++;
-            if(num==2)
-                return;
-        }
-    }
-}
+mutex m;
+const int tCount=4;
+atomic_int sum=0;
 
-map<int,int> mm;
-void test2(vector<int> &arr){
-    for(auto it:arr){
-        mm[it]++;
+void workFun(int id){
+//    cout<<id<<endl;
+
+    for(int i=0;i<20000000;i++){
+//        m.lock(); //临界区域
+//        lock_guard<mutex> lg(m);
+        sum++;
+
+//        cout<<i <<" workFun "<<id<<endl;
+//        m.unlock();
     }
-}
+
+}//抢占式
+
 
 int main(){
 
-    int num;
-    cin>>num;
-    int tmp;
-    vector<int> data;
-    while (cin>>tmp)
-    {
-        data.push_back(tmp);
-        cout<<tmp<<endl;
+    thread t[tCount];
+    for(int i=0;i<tCount;i++){
+        t[i]=thread(workFun,i);
     }
 
-    for(int i=0;i<data.size();i++){
-        cout<<data[i]<<" ";
-    }
+    CELLTimestamp tTime;
 
-    cout<<endl;
+    for(int i=0;i<tCount;i++){
+        t[i].join();
+    }
+//    t.detach();// 可以和主线程同时执行
+//    t.join();  //等待子线程执行完在执行主线程
+
+    cout<<tTime.getElapsedTimeInMilliSec() <<" ms , sum= "<<sum<<endl;
+    sum=0;
+    tTime.update();
+    for(int i=0;i<80000000;i++){
+        sum++;
+    }
+    cout<<tTime.getElapsedTimeInMilliSec() <<" ms , sum= "<<sum<<endl;
+
+    cout<<"hello thread"<<endl;
+
+
+
+
     return 0;
 }
