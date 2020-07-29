@@ -9,7 +9,7 @@
 bool g_bRun=true;
 
 //客户端数量
-const int cCount=1000;//FD_SETSIZE-1;
+const int cCount=10000;//FD_SETSIZE-1;
 //发送线程数量
 const int tCount=4;
 //客户端数组
@@ -43,21 +43,19 @@ void cmdThread(){
 
 void sendThread(int id){
     //4个线程 ID 1~4
-    int c=cCount/tCount;
-    int begin=(id-1)*c;
-    int end=id*c;
-
-
+    int c=cCount/tCount;//划分每个线程需要连接的客户端数量，如1000/4=250
+    int begin=(id-1)*c;//计算每个线程的客户端起始位置
+    int end=id*c;//计算结束位置
 
     for(int i=begin;i<end;i++){
-        client[i]=new SocketClient();
-//        client[i]->Connect("121.199.78.48",9999);
-//        client[i]->Connect("192.168.181.146",9999);
+        client[i]=new SocketClient();//创建客户端对象
     }
 
     for(int i=begin;i<end;i++){
         client[i]->Connect("127.0.0.1",9999);
-        std::cout<<"Connect= "<<i<<std::endl;
+//        client[i]->Connect("121.199.78.48",9999);
+//        client[i]->Connect("192.168.181.146",9999);
+        std::cout<<"thread= "<<id<<" , Connect= "<<i<<std::endl;
     }
 //    client.InitSocket();
 //    client.Connect("127.0.0.1",9999);
@@ -75,14 +73,19 @@ void sendThread(int id){
 //    std::thread t3(cmdThread,&client3);
 //    t3.detach();//Detach 线程。 将当前线程对象所代表的执行实例与该线程对象分离，使得线程的执行可以单独进行。
 
+    std::chrono::milliseconds t(5000);
+    std::this_thread::sleep_for(t);
 
-    Login login;
-    strcpy(login.userName,"ligang");
-    strcpy(login.PassWord,"123456");
+    Login login[10];
+    for(int n=0;n<10;n++){
+        strcpy(login[n].userName,"ligang");
+        strcpy(login[n].PassWord,"123456");
+    }
+    const int nLen=sizeof(login);
+
     while (g_bRun ){//|| client2.isRun()||client3.isRun()
-
         for(int n=begin;n<end;n++){
-            client[n]->SendData(&login);
+            client[n]->SendData(login,nLen);
 //            client[n]->OnRun();
         }
 
@@ -106,8 +109,8 @@ int main(){
 
     //启动发送线程
     for(int n=0;n<tCount;n++){
-        std::thread t1(sendThread,n+1);
-        t1.detach();//Detach 线程。 将当前线程对象所代表的执行实例与该线程对象分离，使得线程的执行可以单独进行。
+        std::thread t2(sendThread,n+1);
+        t2.detach();//Detach 线程。 将当前线程对象所代表的执行实例与该线程对象分离，使得线程的执行可以单独进行。
     }
 
     while(g_bRun){

@@ -182,9 +182,9 @@ void SocketClient::OnNetMsg(DataHeader* header){
     }
 }
 
-int SocketClient::SendData(DataHeader *header) {
+int SocketClient::SendData(DataHeader *header,int nLen) {
     if(isRun()&&header){
-        return send(_sock,(const char*)header, header->dataLength,0);
+        return send(_sock,(const char*)header, nLen,0);
     }
     return SOCKET_ERROR;
 }

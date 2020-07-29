@@ -39,7 +39,7 @@ int main(){
     server.InitSocket();
     server.Bind(nullptr,9999);
     server.Listen(5);
-
+    server.Start();
 //    SocketServer server1;
 //    server1.InitSocket();
 //    server1.Bind(nullptr,9998);

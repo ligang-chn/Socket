@@ -8,7 +8,7 @@
 #define  WIN32_LEAN_AND_MEAN //主要解决WinSock2.h头文件引入问题
 
 #ifdef _WIN32
-    #define FD_SETSIZE	10240
+    #define FD_SETSIZE	2506
     #include <windows.h>
     #include <winsock2.h>
     #include <inaddr.h>//这个可能是之前clion自动引入的
@@ -36,10 +36,14 @@
 #include <thread>
 #include <vector>
 #include <algorithm>
+#include <mutex>
+#include <atomic>
 
 #ifndef  RECV_BUFF_SIZE
 #define  RECV_BUFF_SIZE 10240     //缓冲区最小单元大小
 #endif
+
+#define _CellServer_THREAD_COUNT 4
 
 class ClientSocket{
 public:
@@ -69,15 +73,70 @@ private:
 
     char _szMsgBuf[RECV_BUFF_SIZE*10]; //第二/消息缓冲区
     int _lastPos;  //消息缓冲区的数据尾部位置
+
 };
 
-class SocketServer {
+class INetEvent{
+public:
+    //客户端离开事件
+    virtual void OnLeave(ClientSocket* pClient)=0; //纯虚函数
+    virtual void OnNetMsg(SOCKET _cSock, DataHeader *header)=0;
+};
+
+
+class CellServer{
+public:
+    CellServer(SOCKET sock=INVALID_SOCKET);
+    ~CellServer();
+
+    void setEventObj(INetEvent* event);
+
+    //关闭socket
+    void Close();
+
+    //是否工作中
+    bool isRun();
+
+    bool OnRun();
+
+    //接收数据 处理粘包 拆分包
+    int RecvData(ClientSocket* pClient);
+
+    //响应网络消息
+    virtual void OnNetMsg(SOCKET _cSock, DataHeader* header);
+
+    void addClient(ClientSocket* pClient);
+
+    void Start();
+
+    //查询客户端数量
+    size_t getClientCount();
+
+private:
+    SOCKET _sock;
+    //正式客户队列
+    std::vector<ClientSocket*> _clients;
+    //缓冲客户队列
+    std::vector<ClientSocket*> _clientsBuf;
+    char _szRecv[RECV_BUFF_SIZE]={}; //接收缓冲区
+
+    std::mutex _mutex;
+    std::thread* _pThread;
+
+    INetEvent* _pINetEvent;
+public:
+    std::atomic_int _recvCount;
+};
+
+
+class SocketServer :public INetEvent{
 private:
     SOCKET _sock;
     std::vector<ClientSocket*> _clients;
+    std::vector<CellServer*> _cellServers;
+
     char _szRecv[RECV_BUFF_SIZE]={}; //接收缓冲区
     CELLTimestamp _tTime;
-    int _recvCount;
 
 public:
     SocketServer();
@@ -94,6 +153,12 @@ public:
 
     //接受客户端连接
     SOCKET Accept();
+
+    //启动线程
+    void Start();
+
+    void addClientToServer(ClientSocket* pClient);
+
     //关闭socket
     void Close();
 
@@ -107,13 +172,17 @@ public:
     int RecvData(ClientSocket* pClient);
 
     //响应网络消息
-    virtual void OnNetMsg(SOCKET _cSock, DataHeader* header);
+    void time4msg();
 
     //发送指定Socket数据
     int SendData(SOCKET _cSock, DataHeader* header);
 
     //群发消息
     void SendDataToAll(DataHeader* header);
+
+    virtual void OnLeave(ClientSocket* pClient); //纯虚函数
+    virtual void OnNetMsg(SOCKET _cSock, DataHeader *header);
+
 };
 
 
