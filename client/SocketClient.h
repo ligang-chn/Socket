@@ -41,9 +41,10 @@ class SocketClient {
 private:
     SOCKET _sock;
     char _szRecv[RECV_BUFF_SIZE]={}; //接收缓冲区
-    char _szMsgBuf[RECV_BUFF_SIZE*10]={}; //第二/消息缓冲区
+    char _szMsgBuf[RECV_BUFF_SIZE*5]={}; //第二/消息缓冲区
     int _lastPos=0;  //消息缓冲区的数据尾部位置
     int _nCount=0;
+    bool _isConnected;
 
 public:
     SocketClient();

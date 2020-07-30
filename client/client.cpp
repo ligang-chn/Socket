@@ -42,6 +42,7 @@ void cmdThread(){
 
 
 void sendThread(int id){
+    std::cout<<"thread= "<<id<<" start!"<<std::endl;
     //4个线程 ID 1~4
     int c=cCount/tCount;//划分每个线程需要连接的客户端数量，如1000/4=250
     int begin=(id-1)*c;//计算每个线程的客户端起始位置
@@ -55,8 +56,9 @@ void sendThread(int id){
         client[i]->Connect("127.0.0.1",9999);
 //        client[i]->Connect("121.199.78.48",9999);
 //        client[i]->Connect("192.168.181.146",9999);
-        std::cout<<"thread= "<<id<<" , Connect= "<<i<<std::endl;
+//        std::cout<<"thread= "<<id<<" , Connect= "<<i<<std::endl;
     }
+    std::cout<<"thread= "<<id<<" , Connect=< begin= "<<begin<<" ,end= "<<end<<" >"<<std::endl;
 //    client.InitSocket();
 //    client.Connect("127.0.0.1",9999);
 //    client.Connect("121.199.78.48",9999);
@@ -73,7 +75,7 @@ void sendThread(int id){
 //    std::thread t3(cmdThread,&client3);
 //    t3.detach();//Detach 线程。 将当前线程对象所代表的执行实例与该线程对象分离，使得线程的执行可以单独进行。
 
-    std::chrono::milliseconds t(5000);
+    std::chrono::milliseconds t(3000);
     std::this_thread::sleep_for(t);
 
     Login login[10];
@@ -86,7 +88,7 @@ void sendThread(int id){
     while (g_bRun ){//|| client2.isRun()||client3.isRun()
         for(int n=begin;n<end;n++){
             client[n]->SendData(login,nLen);
-//            client[n]->OnRun();
+            client[n]->OnRun();
         }
 
 //        client2.OnRun();
@@ -97,7 +99,9 @@ void sendThread(int id){
 //    client2.Close();
     for(int n=begin;n<end;n++){
         client[n]->Close();
+        delete client[n];
     }
+    std::cout<<"thread= "<<id<<" exit!"<<std::endl;
 }
 
 int main(){

@@ -96,7 +96,7 @@ bool CellServer::OnRun(){
                     auto iter=_clients.begin()+n;
                     if(iter!=_clients.end()){
                         if(_pINetEvent)
-                            _pINetEvent->OnLeave(_clients[n]);
+                            _pINetEvent->OnNetLeave(_clients[n]);
                         delete _clients[n];
                         _clients.erase(iter);
                     }
@@ -127,7 +127,7 @@ int CellServer::RecvData(ClientSocket *pClient) {
             //剩余未处理消息缓冲区数据的长度
             int nSize=pClient->getLastPos()-header->dataLength;
             //处理网络消息
-            OnNetMsg(pClient->sockfd(),header);
+            OnNetMsg(pClient,header);
             //将未处理数剧前移
             memcpy(pClient->msgBuf(),pClient->msgBuf()+header->dataLength,nSize);
             //消息缓冲区的数据尾部位置前移
@@ -141,8 +141,8 @@ int CellServer::RecvData(ClientSocket *pClient) {
     return 0;
 }
 
-void CellServer::OnNetMsg(SOCKET cSock, DataHeader *header) {
-    _pINetEvent->OnNetMsg(cSock,header);
+void CellServer::OnNetMsg(ClientSocket* pClient, DataHeader *header) {
+    _pINetEvent->OnNetMsg(pClient,header);
 
 //    auto t1=_tTime.getElapsedSecond();
 //    if(t1>=1.0){
@@ -158,8 +158,8 @@ void CellServer::OnNetMsg(SOCKET cSock, DataHeader *header) {
 //            std::cout<<"socket: "<<cSock<<" 收到命令：CMD_LOGIN ,数据长度："<<login->dataLength
 //                     <<" ,username: "<<login->userName<<" ,password: "<<login->PassWord<<std::endl;
             //忽略判断用户密码是否正确的过程
-//            LoginResult ret;
-//            SendData(cSock,&ret);
+            LoginResult ret;
+            pClient->SendData(&ret);
         }
             break;
         case CMD_LOGOUT:
@@ -179,7 +179,7 @@ void CellServer::OnNetMsg(SOCKET cSock, DataHeader *header) {
             break;
         default:
         {
-            std::cout<<"socket= "<<(int)_sock<<" 收到未定义消息,数据长度："<<header->dataLength<<std::endl;
+            std::cout<<"socket= "<<pClient->sockfd()<<" 收到未定义消息,数据长度："<<header->dataLength<<std::endl;
 //            DataHeader header;
 //            SendData(cSock,&header);
         }
@@ -298,7 +298,7 @@ SOCKET SocketServer::Accept() {
 //        SendDataToAll(&userJoin);
         //将新客户端放入消息服务线程的缓冲队列
         addClientToServer(new ClientSocket(cSock));
-        _clientCount++;
+
 //        std::cout<<"SUCCESS--> 新客户端(count= "<<_clients.size() <<" ) 加入：IP = "<<inet_ntoa(clientAddr.sin_addr)<<" ,socket= "<<(int)cSock<<std::endl;
     }
     return cSock;
@@ -314,6 +314,7 @@ void SocketServer::addClientToServer(ClientSocket *pClient) {
     }
 
     pMinServer->addClient(pClient);
+    OnNetJoin(pClient);
 }
 
 
@@ -444,15 +445,9 @@ void SocketServer::time4msg() {
 }
 
 
-int SocketServer::SendData(SOCKET cSock, DataHeader *header) {
-    if(isRun()&&header){
-        return send(cSock,(const char*)header, header->dataLength,0);
-    }
-    return SOCKET_ERROR;
-}
 
-void SocketServer::Start() {
-    for(int n=0;n<_CellServer_THREAD_COUNT;n++){
+void SocketServer::Start(int nCellServer) {
+    for(int n=0;n<nCellServer;n++){
         auto ser=new CellServer(_sock);
         _cellServers.push_back(ser);
         //注册网络事件接受对象
@@ -461,12 +456,17 @@ void SocketServer::Start() {
         ser->Start();
     }
 }
-
-void SocketServer::OnLeave(ClientSocket *pClient) {
+//只会在客户端连接线程触发 安全
+void SocketServer::OnNetJoin(ClientSocket *pClient) {
+    _clientCount++;
+}
+//cellServer 4 多个线程触发 不安全
+void SocketServer::OnNetLeave(ClientSocket *pClient) {
     _clientCount--;
 }
 
-void SocketServer::OnNetMsg(SOCKET _cSock, DataHeader *header) {
+//cellServer 4 多个线程触发 不安全
+void SocketServer::OnNetMsg(ClientSocket* pClient, DataHeader *header) {
 //    time4msg();
     _recvCount++;
 }

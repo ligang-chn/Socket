@@ -7,6 +7,7 @@
 
 SocketClient::SocketClient(){
     _sock=INVALID_SOCKET;
+    _isConnected=false;
 }
 
 SocketClient::~SocketClient(){
@@ -52,6 +53,7 @@ int SocketClient::Connect(const char *ip, unsigned short port) {
         std::cout<<"ERROR-->socket= "<<(int)_sock<<" connect server: ( ip= "
         <<ip<<" , port= "<<port<<" ) failed!"<<std::endl;
     }else{
+        _isConnected=true;
 //        std::cout<<"success-->socket= "<<(int)_sock<<" connect server: ( ip= "
 //        <<ip<<" , port= "<<port<<" ) success!"<<std::endl;
     }
@@ -70,6 +72,7 @@ void SocketClient::Close() {
 #endif
         _sock=INVALID_SOCKET;
     }
+    _isConnected=false;
 }
 
 
@@ -80,7 +83,6 @@ bool SocketClient::OnRun() {
         FD_SET(_sock,&fdReads);
         timeval t={0,0};
         int ret=select(_sock+1,&fdReads,0,0,&t);
-//        std::cout<<"client select ret= "<<ret<<"count= "<<_nCount++ <<std::endl;
         if(ret<0){
             std::cout<<"socket= "<<(int)_sock<<" select任务结束"<<std::endl;
             Close();
@@ -101,7 +103,7 @@ bool SocketClient::OnRun() {
 }
 
 bool SocketClient::isRun() {
-    return _sock!=INVALID_SOCKET;
+    return _sock!=INVALID_SOCKET &&_isConnected;
 }
 
 //接收数据 处理粘包、分包
@@ -183,8 +185,11 @@ void SocketClient::OnNetMsg(DataHeader* header){
 }
 
 int SocketClient::SendData(DataHeader *header,int nLen) {
+    int ret=SOCKET_ERROR;
     if(isRun()&&header){
-        return send(_sock,(const char*)header, nLen,0);
+        ret= send(_sock,(const char*)header, nLen,0);
+        if(SOCKET_ERROR==ret)
+            Close();
     }
-    return SOCKET_ERROR;
+    return ret;
 }

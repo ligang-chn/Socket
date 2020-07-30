@@ -43,7 +43,7 @@
 #define  RECV_BUFF_SIZE 10240     //缓冲区最小单元大小
 #endif
 
-#define _CellServer_THREAD_COUNT 4   //线程数量
+//#define _CellServer_THREAD_COUNT 4   //线程数量
 //客户端数据类型
 class ClientSocket{
 public:
@@ -68,20 +68,29 @@ public:
     void setLastPos(int pos){
         _lastPos=pos;
     }
+    //发送数据
+    int SendData(DataHeader *header) {
+        if(header){
+            return send(_sockfd,(const char*)header, header->dataLength,0);
+        }
+        return SOCKET_ERROR;
+    }
 private:
     SOCKET _sockfd; //fd_set  file desc set
 
-    char _szMsgBuf[RECV_BUFF_SIZE*10]; //第二/消息缓冲区
+    char _szMsgBuf[RECV_BUFF_SIZE*5]; //第二/消息缓冲区
     int _lastPos;  //消息缓冲区的数据尾部位置
 };
 
 //网络事件接口
 class INetEvent{
 public:
+    //客户端加入事件
+    virtual void OnNetJoin(ClientSocket* pClient)=0;
     //客户端离开事件
-    virtual void OnLeave(ClientSocket* pClient)=0; //纯虚函数
+    virtual void OnNetLeave(ClientSocket* pClient)=0; //纯虚函数
     //客户端消息事件
-    virtual void OnNetMsg(SOCKET _cSock, DataHeader *header)=0;
+    virtual void OnNetMsg(ClientSocket* pClient, DataHeader *header)=0;
 };
 
 
@@ -104,7 +113,7 @@ public:
     int RecvData(ClientSocket* pClient);
 
     //响应网络消息
-    virtual void OnNetMsg(SOCKET _cSock, DataHeader* header);
+    virtual void OnNetMsg(ClientSocket* pClient, DataHeader* header);
 
     void addClient(ClientSocket* pClient);
 
@@ -160,7 +169,7 @@ public:
     SOCKET Accept();
 
     //启动线程
-    void Start();
+    void Start(int nCellServer);
 
     void addClientToServer(ClientSocket* pClient);
 
@@ -180,13 +189,13 @@ public:
     void time4msg();
 
     //发送指定Socket数据
-    int SendData(SOCKET _cSock, DataHeader* header);
+//    int SendData(SOCKET _cSock, DataHeader* header);
 
     //群发消息
 //    void SendDataToAll(DataHeader* header);
-
-    virtual void OnLeave(ClientSocket* pClient); //纯虚函数
-    virtual void OnNetMsg(SOCKET _cSock, DataHeader *header);
+    virtual void OnNetJoin(ClientSocket* pClient);
+    virtual void OnNetLeave(ClientSocket* pClient); //纯虚函数
+    virtual void OnNetMsg(ClientSocket* pClient, DataHeader *header);
 
 };
 
