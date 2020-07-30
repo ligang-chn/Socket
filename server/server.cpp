@@ -34,7 +34,6 @@ void cmdThread(){
 }
 
 int main(){
-
     SocketServer server;
     server.InitSocket();
     server.Bind(nullptr,9999);
