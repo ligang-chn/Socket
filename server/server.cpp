@@ -11,7 +11,7 @@ using namespace std;
 bool g_bRun=true;
 ///子线程处理函数
 void cmdThread(){
-    while (true){
+    while (true){   //这个线程一直阻塞在scanf处，等待命令输入
         char cmdBuf[256]={};
         scanf("%s",cmdBuf);
         if(0==strcmp(cmdBuf,"exit")) {
@@ -51,7 +51,7 @@ int main(){
     //上面的意思就是，使用detach,main函数不用等待线程结束才能结束，有时候线程还没有结束，main函数就已经结束了。
 
     while (g_bRun){ //||server1.isRun()
-        server.OnRun();
+        server.OnRun();   //等待客户端连接——生产者线程
 //        server1.OnRun();
     }
     server.Close();

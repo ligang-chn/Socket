@@ -2,12 +2,11 @@
 // Created by ligang on 2020/7/22.
 //
 
+#include <functional>
 #include "SocketServer.h"
 
 CellServer::CellServer(SOCKET sock){
     _sock=sock;
-    _pThread= nullptr;
-    _recvCount=0;
     _pINetEvent= nullptr;
 }
 
@@ -29,8 +28,6 @@ void CellServer::Close() {
         }
         ///8)关闭套接字
         closesocket(_sock);
-        ///
-        WSACleanup();//清除Win Socket环境
 #else
         for(int n=(int)_clients.size()-1;n>=0;n--){
             close(_clients[n]->sockfd());
@@ -41,7 +38,6 @@ void CellServer::Close() {
 #endif
         _clients.clear();
     }
-
 }
 
 
@@ -78,7 +74,7 @@ bool CellServer::OnRun(){
             ///2）使用多线程进行平摊这一部分的消耗，我们现在的消耗不在收数据那一块。
             FD_SET(_clients[n]->sockfd(),&fdRead);
             if(maxSock<_clients[n]->sockfd()){
-                maxSock=_clients[n]->sockfd();
+                maxSock=_clients[n]->sockfd(); //查找最大的socket值
             }
         }
         ///nfds是一个整数值，是指fd_set集合中所有描述符（socket）的范围，而不是数量
@@ -116,7 +112,7 @@ int CellServer::RecvData(ClientSocket *pClient) {
     int nLen=(int)recv(pClient->sockfd(),(char*)&_szRecv, RECV_BUFF_SIZE,0);//数据先接收包头大小
 //    std::cout<<"Server nLen= "<<nLen<<std::endl;
     if(nLen<=0){
-        std::cout<<" 客户端: "<<pClient->sockfd()<<" 退出~~~~~"<<std::endl;
+//        std::cout<<" 客户端: "<<pClient->sockfd()<<" 退出~~~~~"<<std::endl;
         return -1;
     }
 
@@ -146,8 +142,7 @@ int CellServer::RecvData(ClientSocket *pClient) {
 }
 
 void CellServer::OnNetMsg(SOCKET cSock, DataHeader *header) {
-    _recvCount++;
-//    _pINetEvent->OnNetMsg(cSock,header);
+    _pINetEvent->OnNetMsg(cSock,header);
 
 //    auto t1=_tTime.getElapsedSecond();
 //    if(t1>=1.0){
@@ -201,7 +196,8 @@ void CellServer::addClient(ClientSocket *pClient) {
 }
 
 void CellServer::Start() {
-    _pThread=new std::thread(std::mem_fun(&CellServer::OnRun),this);
+    _thread=std::thread(std::mem_fn(&CellServer::OnRun),this);
+    //mem_fn 把成员函数转为函数对象，使用对象指针或对象（引用）进行绑定
 
 }
 
@@ -212,6 +208,8 @@ size_t CellServer::getClientCount() {
 ///====================================================================================
 SocketServer::SocketServer(){
     _sock=INVALID_SOCKET;
+    _recvCount=0;
+    _clientCount=0;
 }
 
 SocketServer::~SocketServer() {
@@ -298,14 +296,15 @@ SOCKET SocketServer::Accept() {
     }else{
 //        NewUserJoin userJoin((int)cSock);
 //        SendDataToAll(&userJoin);
+        //将新客户端放入消息服务线程的缓冲队列
         addClientToServer(new ClientSocket(cSock));
+        _clientCount++;
 //        std::cout<<"SUCCESS--> 新客户端(count= "<<_clients.size() <<" ) 加入：IP = "<<inet_ntoa(clientAddr.sin_addr)<<" ,socket= "<<(int)cSock<<std::endl;
     }
     return cSock;
 }
 
 void SocketServer::addClientToServer(ClientSocket *pClient) {
-    _clients.push_back(pClient);
     //查找客户端数量最少的CellServer消息处理对象
     auto pMinServer=_cellServers[0];
     for(auto pCellServer:_cellServers){
@@ -321,23 +320,14 @@ void SocketServer::addClientToServer(ClientSocket *pClient) {
 void SocketServer::Close() {
     if(_sock!=INVALID_SOCKET){
 #ifdef _WIN32
-        for(int n=(int)_clients.size()-1;n>=0;n--){
-            closesocket(_clients[n]->sockfd());
-            delete _clients[n];
-        }
         ///8)关闭套接字
         closesocket(_sock);
         ///
         WSACleanup();//清除Win Socket环境
 #else
-        for(int n=(int)_clients.size()-1;n>=0;n--){
-            close(_clients[n]->sockfd());
-            delete _clients[n];
-        }
         ///8)关闭套接字
         close(_sock);
 #endif
-        _clients.clear();
     }
 }
 
@@ -353,7 +343,7 @@ bool SocketServer::OnRun() {
 //        FD_ZERO(&fdWrite);
 //        FD_ZERO(&fdExp);
 
-        FD_SET(_sock,&fdRead);
+        FD_SET(_sock,&fdRead);//仅仅去读监听套接字，查看有没有客户端连接
 //        FD_SET(_sock,&fdWrite);
 //        FD_SET(_sock,&fdExp);
 
@@ -414,7 +404,7 @@ int SocketServer::RecvData(ClientSocket* pClient){
     int nLen=(int)recv(pClient->sockfd(),(char*)&_szRecv, RECV_BUFF_SIZE,0);//数据先接收包头大小
 //    std::cout<<"Server nLen= "<<nLen<<std::endl;
     if(nLen<=0){
-        std::cout<<" 客户端: "<<pClient->sockfd()<<" 退出~~~~~"<<std::endl;
+//        std::cout<<" 客户端: "<<pClient->sockfd()<<" 退出~~~~~"<<std::endl;
         return -1;
     }
 
@@ -443,16 +433,12 @@ int SocketServer::RecvData(ClientSocket* pClient){
     return 0;
 }
 
+//计算并输出每秒收到的网络消息
 void SocketServer::time4msg() {
-
     auto t1=_tTime.getElapsedSecond();
     if(t1>=1.0){
-        int recvCount=0;
-        for(auto ser:_cellServers){
-            recvCount+=ser->_recvCount;
-            ser->_recvCount=0;
-        }
-        std::cout<<"thread=< "<<_cellServers.size()<<" >, "<<"time=< "<<t1<<" >, socket=< "<<_sock<<" >, clients=< "<<(int)_clients.size()<<" >, recvCount=< "<<(int)(recvCount/t1)<<" >"<<std::endl;
+        std::cout<<"thread=< "<<_cellServers.size()<<" >, "<<"time=< "<<t1<<" >, socket=< "<<_sock<<" >, clients=< "<<(int)_clientCount<<" >, recvCount=< "<<(int)(_recvCount/t1)<<" >"<<std::endl;
+        _recvCount=0;
         _tTime.update();
     }
 }
@@ -465,34 +451,22 @@ int SocketServer::SendData(SOCKET cSock, DataHeader *header) {
     return SOCKET_ERROR;
 }
 
-void SocketServer::SendDataToAll(DataHeader *header) {
-    if(isRun()&&header){
-        for(int n=(int)_clients.size()-1;n>=0;n--){
-            SendData(_clients[n]->sockfd(), header);
-        }
-    }
-}
-
-
 void SocketServer::Start() {
     for(int n=0;n<_CellServer_THREAD_COUNT;n++){
         auto ser=new CellServer(_sock);
         _cellServers.push_back(ser);
+        //注册网络事件接受对象
         ser->setEventObj(this);
+        //启动消息处理线程
         ser->Start();
     }
 }
 
 void SocketServer::OnLeave(ClientSocket *pClient) {
-    for(int n=(int)_clients.size()-1;n>=0;n--){
-        if(_clients[n]==pClient){
-            auto iter=_clients.begin()+n;
-            if(iter!=_clients.end())
-                _clients.erase(iter);
-        }
-    }
+    _clientCount--;
 }
 
 void SocketServer::OnNetMsg(SOCKET _cSock, DataHeader *header) {
 //    time4msg();
+    _recvCount++;
 }
