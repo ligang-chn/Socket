@@ -158,8 +158,8 @@ void CellServer::OnNetMsg(ClientSocket* pClient, DataHeader *header) {
 //            std::cout<<"socket: "<<cSock<<" 收到命令：CMD_LOGIN ,数据长度："<<login->dataLength
 //                     <<" ,username: "<<login->userName<<" ,password: "<<login->PassWord<<std::endl;
             //忽略判断用户密码是否正确的过程
-            LoginResult ret;
-            pClient->SendData(&ret);
+//            LoginResult ret;
+//            pClient->SendData(&ret);
         }
             break;
         case CMD_LOGOUT:

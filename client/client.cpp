@@ -88,7 +88,7 @@ void sendThread(int id){
     while (g_bRun ){//|| client2.isRun()||client3.isRun()
         for(int n=begin;n<end;n++){
             client[n]->SendData(login,nLen);
-            client[n]->OnRun();
+//            client[n]->OnRun();
         }
 
 //        client2.OnRun();
